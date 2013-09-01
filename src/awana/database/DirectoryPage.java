@@ -1,12 +1,20 @@
 package awana.database;
 
 import java.awt.Color;
+import java.awt.FlowLayout;
 import java.awt.image.ImageObserver;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Vector;
 import javax.swing.DefaultListModel;
+import javax.swing.JCheckBox;
 import javax.swing.JComponent;
+import javax.swing.JFormattedTextField;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextField;
 import javax.swing.ListModel;
 
 /**
@@ -15,17 +23,21 @@ import javax.swing.ListModel;
  */
 public class DirectoryPage extends javax.swing.JFrame {
 
-	private ArrayList<JComponent> tabs = new ArrayList<>();
-	private Vector<Record> records;
-	private Vector<Record> displayRecords;
-	private DatabaseWrapper databaseWrapper = new DatabaseWrapper();
-	private int selectedStudentID;
+	private ArrayList<JComponent> tabs;
+	private Vector<Listing> records;
+	private Vector<Listing> displayList;
+	private DatabaseWrapper databaseWrapper;
+	private Record selectedRecord;
 
 	/**
 	 * Creates new form DirectoryPage
 	 */
 	public DirectoryPage() {
 		initComponents();
+		Record.loadMasterFields(); //do not remove temporary record load fix will be replaced with dynamic loading once variable yml field loading is supproted
+		databaseWrapper = new DatabaseWrapper();
+		loadSortAndDisplayRecordNames();
+		tabs = new ArrayList<>();
 	}
 
 	/**
@@ -49,15 +61,15 @@ public class DirectoryPage extends javax.swing.JFrame {
 
         recordScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         recordScrollPane.setName(""); // NOI18N
-        recordScrollPane.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                selectRecordHandler(evt);
-            }
-        });
 
         recordItemList.setModel(getListItems());
         recordItemList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         recordItemList.setName(""); // NOI18N
+        recordItemList.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                listingSelected(evt);
+            }
+        });
         recordScrollPane.setViewportView(recordItemList);
 
         newRecord.setText("New");
@@ -136,15 +148,15 @@ public class DirectoryPage extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void newRecordHandler(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_newRecordHandler
-		// TODO add your handling code here:
+		newRecord();
     }//GEN-LAST:event_newRecordHandler
 
     private void deleteRecordHandler(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_deleteRecordHandler
 		String msgNoRecordSelected = "No Record Selected.";
-		Record delete = getSelectedRecord();
+		Listing delete = getSelectedListing();
 		if (delete == null) {
 			JOptionPane.showMessageDialog(this, msgNoRecordSelected,
-					"Null Record",
+					"Null",
 					JOptionPane.YES_NO_OPTION);
 			return;
 		}
@@ -160,25 +172,25 @@ public class DirectoryPage extends javax.swing.JFrame {
 				confirmDeleteOptions,
 				confirmDeleteOptions[1]);
 		if (choice == JOptionPane.YES_OPTION) {
+			databaseWrapper.deleteListing(delete);
+			removeAndUpdateListing(delete);
 		}
     }//GEN-LAST:event_deleteRecordHandler
 
-    private void selectRecordHandler(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_selectRecordHandler
-		// TODO add your handling code here:
-    }//GEN-LAST:event_selectRecordHandler
-
     private void searchBoxFocusGainedHandler(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_searchBoxFocusGainedHandler
-		searchBox.setForeground(java.awt.Color.GREEN);
+		searchBox.setForeground(java.awt.Color.BLACK);
 		searchBox.setText("");
     }//GEN-LAST:event_searchBoxFocusGainedHandler
 
     private void searchBoxKeyTypedHandler(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_searchBoxKeyTypedHandler
 
 		char pressed = evt.getKeyChar();
-		if(pressed == '\b' || pressed == (char) 127){
-			displayRecords = searchRecords(records, searchBox.getText());
+		if (pressed == '\b' || pressed == (char) 127) {
+			displayList = searchRecords(records, searchBox.getText());
+		} else {
+			displayList = searchRecords(displayList, searchBox.getText());
 		}
-		displayRecords = searchRecords(displayRecords, searchBox.getText());
+		updateRecordDisplay();
 
     }//GEN-LAST:event_searchBoxKeyTypedHandler
 
@@ -187,46 +199,119 @@ public class DirectoryPage extends javax.swing.JFrame {
 		searchBox.setText("Search");
     }//GEN-LAST:event_searchBoxFocusLostHandler
 
-	public void newRecord(){
-		Student s = databaseWrapper.newStudent();
-		Record r = s.createRecord();
-		addAndDisplayRecord(r);
+    private void listingSelected(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_listingSelected
+		if (recordItemList.getSelectedValue() != null) {
+			selectedRecord = databaseWrapper.getRecord(((Listing) recordItemList.getSelectedValue()).getID());
+			loadRecordData();
+		} else {
+			selectedRecord = null;
+			clearRecordData();
+		}
+    }//GEN-LAST:event_listingSelected
+
+	public void loadRecordData() {
+		tabs = getTabs();
+		addTabs(tabs);
 	}
 
-	public void addAndDisplayRecord(Record r){
+	public void clearRecordData() {
+		recordData.removeAll();
+		recordData.revalidate();
+	}
+
+	public void removeAndUpdateListing(Listing r) {
+		records.remove(r);
+		sortAndDisplayRecordNames();
+	}
+
+	public void newRecord() {
+		Record s = databaseWrapper.newRecord();
+		Listing l = s.createListing();
+		addAndDisplayListing(l);
+		selectListing(l);
+	}
+
+	public void addAndDisplayListing(Listing r) {
 		records.add(r);
 		sortAndDisplayRecordNames();
 	}
 
 	public void loadSortAndDisplayRecordNames() {
-		records = databaseWrapper.getRecordsAsVector();
+		records = databaseWrapper.getRecordListingsAsVector();
 		sortAndDisplayRecordNames();
 	}
 
-	public void sortAndDisplayRecordNames(){
+	public void sortAndDisplayRecordNames() {
 		SortRecordsAlphabeticlyQuickSort();
-		displayRecords = records;
-		recordItemList.setListData(displayRecords);
+		displayList = (Vector<Listing>) records.clone();
+		recordItemList.setListData((Vector<Listing>) displayList.clone());
 		updateRecordDisplay();
 	}
 
-	public void updateRecordDisplay(){
+	public void updateRecordDisplay() {
 		recordItemList.revalidate();  //TODO: find out which of the following lines are necessary
 		recordScrollPane.revalidate();
 		recordScrollPane.repaint();
 	}
 
+	public void selectListing(Listing l) {
+		recordItemList.setSelectedValue(l, true);
+	}
+
 	public void addTabs(ArrayList<JComponent> tabs) {
 		JComponent tab;
 		for (int i = 0; i < tabs.size(); i++) {
-			tab = tabs.get(i);
-			addTab(tab);
+			addTab(tabs.get(i));
 		}
 	}
 
 	public void addTab(JComponent tab) {
-		this.tabs.add(tab);
 		recordData.addTab(tab.getName(), tab);
+	}
+
+	public ArrayList<JComponent> getTabs() {
+		ArrayList<JComponent> tabList = new ArrayList<>();
+		ArrayList<String> bookTabNames = new ArrayList<>();
+		JScrollPane scrollPane = new JScrollPane();
+		scrollPane.setName("Contact");
+		JPanel contactPane = new JPanel();
+		contactPane.setName("Contact");
+		contactPane.setLayout(new FlowLayout());
+		for (int i = 0; i < Record.getFieldListSize(); i++) {
+			JLabel label = new JLabel();
+			label.setText(Record.getMasterField(i).getName());
+			contactPane.add(label);
+			JTextField text = new JTextField();
+			text.setName(Record.getMasterField(i).getName());
+			text.setSize(Record.getMasterField(i).getDisplayLength() * 5, 10);
+			contactPane.add(text);
+		}
+		scrollPane.add(contactPane);
+		tabList.add(scrollPane);
+		bookTabNames.addAll(Record.getBookGroups());
+		for (int i = 0; i < bookTabNames.size(); i++) {
+		JScrollPane scrollPane1 = new JScrollPane();
+		scrollPane.setName("Contact");
+		JPanel jPane = new JPanel();
+			jPane.setName(bookTabNames.get(i));
+			jPane.setLayout(new FlowLayout());
+			ArrayList<String> names = Record.getBookNamesByGroup(bookTabNames.get(i));
+			for (int j = 0; j < Record.getMasterBook(i).getNumberOfSections(); j++) {
+				Section s = Record.getMasterBook(i).getSection(j);
+				JCheckBox box = new JCheckBox();
+				box.setText(s.getName());
+				jPane.add(box);
+				JFormattedTextField date = new JFormattedTextField(new SimpleDateFormat("mm/dd/yyyy"));
+				date.setEditable(false);
+				if(s.getCompletionDate() != null){
+					date.setText(s.getCompletionDate().getMonth() + "//" + s.getCompletionDate().getDate() + "//" + s.getCompletionDate().getYear());
+				}
+				jPane.add(date);
+			}
+			scrollPane1.add(jPane);
+			tabList.add(scrollPane1);
+		}
+		return tabList;
 	}
 
 	/**
@@ -269,12 +354,12 @@ public class DirectoryPage extends javax.swing.JFrame {
     // End of variables declaration//GEN-END:variables
 
 	private void SortRecordsAlphabeticlyQuickSort() {
-		if(!records.isEmpty()){
+		if (!records.isEmpty()) {
 			quickSortAlphabeticly(records, 0, records.size() - 1);
 		}
 	}
 
-	private void quickSortAlphabeticly(Vector<Record> list, int left, int right) {
+	private void quickSortAlphabeticly(Vector<Listing> list, int left, int right) {
 		int index = partition(list, left, right);
 		if (left < index - 1) {
 			quickSortAlphabeticly(list, left, index - 1);
@@ -284,10 +369,10 @@ public class DirectoryPage extends javax.swing.JFrame {
 		}
 	}
 
-	private int partition(Vector<Record> list, int left, int right) {
+	private int partition(Vector<Listing> list, int left, int right) {
 		int i = left, j = right;
-		Record tmp1, tmp2;
-		Record pivot = list.get((left + right) / 2);
+		Listing tmp1, tmp2;
+		Listing pivot = list.get((left + right) / 2);
 
 		while (i <= j) {
 			while (list.get(i).compairName(pivot) == -1) {
@@ -299,8 +384,10 @@ public class DirectoryPage extends javax.swing.JFrame {
 			if (i <= j) {
 				tmp1 = list.get(i);
 				tmp2 = list.get(j);
-				list.remove(i); list.add(i, tmp2);
-				list.remove(j); list.add(j, tmp1);
+				list.remove(i);
+				list.add(i, tmp2);
+				list.remove(j);
+				list.add(j, tmp1);
 				i++;
 				j--;
 			}
@@ -314,24 +401,28 @@ public class DirectoryPage extends javax.swing.JFrame {
 		return list;
 	}
 
-	private Record getSelectedRecord() {
-		throw new UnsupportedOperationException("Not yet implemented");
+	private Listing getSelectedListing() {
+		return (Listing) recordItemList.getSelectedValue();
 	}
 
-	private Vector<Record> searchRecords(Vector<Record> searchSet, String text) {
-		Vector<Record> resultSet = new Vector<Record>();
-		if(searchSet.isEmpty()){
-			return null;
+	private Vector<Listing> searchRecords(Vector<Listing> searchSet, String text) {
+		Vector<Listing> resultSet = new Vector<Listing>();
+		if (searchSet.isEmpty()) {
+			return resultSet;
 		}
 		int counter = 0;
-		while(counter < searchSet.size()){
-			Record testee = searchSet.get(counter);
-			if(testee.getLastName().contains(text) || testee.getFirstName().contains(text)){
+		while (counter < searchSet.size()) {
+			Listing testee = searchSet.get(counter);
+			if (testee.getLastName().contains(text) || testee.getFirstName().contains(text)) {
 				resultSet.add(testee);
 			}
 			counter++;
 		}
 		return resultSet;
 	}
-		//TODO: put searching entries and loading data in seperate threads from application to eliminate temperary locking of application.
+	//TODO: put searching entries and loading data in seperate threads from application to eliminate temperary locking of application.
+
+	private void deleteRecord(Listing delete) {
+		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+	}
 }

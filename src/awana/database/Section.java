@@ -11,8 +11,10 @@ public class Section {
 	private boolean completed;
 	private Date completionDate;
 
-	public boolean isCompleted() {
-		return completed;
+	public Section(String name, boolean completed, Date completionDate){
+		this.name = name;
+		this.completed = completed;
+		this.completionDate = completionDate;
 	}
 
 	public void setCompleted(boolean completed){
@@ -24,8 +26,8 @@ public class Section {
 		}
 	}
 
-	public void setName(String name){
-		this.name = name;
+	public boolean isCompleted() {
+		return completed;
 	}
 
 	public String getName(){
@@ -33,7 +35,6 @@ public class Section {
 	}
 
 	public Date getCompletionDate(){
-		return (Date) completionDate.clone();
+		return completionDate;
 	}
-
 }
