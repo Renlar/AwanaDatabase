@@ -72,19 +72,34 @@ public class Book {
 	};
 
 	private ArrayList<Section> sections;
+	private String group;
 	private String name;
 	private boolean completed;
 	private Date completionDate;
 
-	public Book(){
+	public Book(String groupAndName, ArrayList<Section> sections, boolean completed, Date completionDate){
+		setGroupAndName(groupAndName);
+		this.sections = sections;
+		this.completed = completed;
+		this.completionDate = completionDate;
+	}
+
+	private void setGroupAndName(String groupAndName){
+		int index = groupAndName.indexOf('_');
+		group = groupAndName.substring(0, index - 1);
+		name = groupAndName.substring(index + 1);
+	}
+
+	public String getFullName(){
+		return group + "_" + name;
+	}
+
+	public String getGroup(){
+		return group;
 	}
 
 	public String getName(){
 		return name;
-	}
-
-	public void setName(String name){
-		this.name = name;
 	}
 
 	public int getNumberOfSections(){
@@ -130,11 +145,7 @@ public class Book {
 		}
 	}
 
-	public void addSection(Section s){
-		sections.add(s);
-	}
-
-	public void removeSection(Section s){
-		sections.remove(s);
+	public Section getSection(int i) {
+		return sections.get(i);
 	}
 }

@@ -7,14 +7,16 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.h2.jdbcx.JdbcDataSource;
 //TODO: rewrite wrapper using http://iciql.com/ to simplify database connections.
+
 /**
  *
  * @author Renlar
  */
 public class DatabaseWrapper {
 
-	public static final String delete = "DELETE ";
+	public static final String altar = "ALTAR";
 	public static final String create = "CREATE ";
+	public static final String delete = "DELETE ";
 	public static final String from = "FROM ";
 	public static final String insert = "INSERT ";
 	public static final String into = "INTO ";
@@ -22,65 +24,116 @@ public class DatabaseWrapper {
 	public static final String set = "SET ";
 	public static final String table = "TABLE ";
 	public static final String update = "UPDATE ";
+	public static final String values = "VALUES ";
 	public static final String where = "WHERE ";
-
 	public static final String bool = "BOOLEAN ";
 	public static final String date = "DATE ";
 	public static final String varchar100 = "VARCHAR(100) ";
-
-	private String dataTable = "directory";
+	public static final String fieldPrefix = "field_";
+	public static final String bookPrefix = "book_";
+	public static final String completedPostfix = "_completed";
+	public static final String datePostfix = "_date";
+	private String dataTable = "DIRECTORY";
 	private Connection h2DatabaseConnection;
 
 	public DatabaseWrapper() {
 		createDatabaseConnection();
-		//TODO: fix isDatabaseGenerated() so this test will work thereby eliminating gient error at beginning of code execution.
-		//if (!isDatabaseGenerated()) {
-			generateDatabase();
-		//}
+		updateDatabase();
 	}
 
-	public Student getStudent(int ID) {
+	public void deleteRecord(Record r) {
 		try {
-			executeQuery("");
+			runStatement(delete + from + dataTable + " " + where + "ID = \'" + r.getID() + "\';");
+		} catch (Exception ex) {
+			Logger.getLogger(DatabaseWrapper.class.getName()).log(Level.SEVERE, null, ex);
+		}
+	}
+
+	public void deleteListing(Listing l) {
+		try {
+			runStatement(delete + from + dataTable + " " + where + "ID = '" + l.getID() + "';");
+		} catch (Exception ex) {
+			Logger.getLogger(DatabaseWrapper.class.getName()).log(Level.SEVERE, null, ex);
+		}
+	}
+
+	public Record getRecord(int ID) {
+		ResultSet result;
+		Record s;
+		try {
+			result = executeQuery("SELECT * FROM " + dataTable + " WHERE ID = " + ID + ";");
+			result.first();
+			s = loadRecordData(result, ID);
+		} catch (Exception ex) {
+			Logger.getLogger(DatabaseWrapper.class.getName()).log(Level.SEVERE, null, ex);
+			return null;
+		}
+		return s;
+	}
+
+	public void saveRecord(Record record) {
+		Field f;
+		StringBuilder builder = new StringBuilder(update + dataTable + set + " `");
+		for (int i = 0; i < Record.getFieldListSize(); i++) {
+			f = record.getField(i);
+			builder.append(fieldPrefix).append(f.getName()).append("` = '").append(f.getData()).append("', `");
+		}
+		Book b;
+		for (int i = 0; i < record.getBookListSize(); i++) {
+			b = record.getBook(i);
+			Section s;
+			for (int j = 0; j < b.getNumberOfSections(); j++) {
+				s = b.getSection(j);
+				builder.append(bookPrefix).append(b.getName()).append(s.getName()).append(completedPostfix).append("` = '");
+				builder.append(s.isCompleted()).append("', `");
+				builder.append(bookPrefix).append(b.getName()).append(s.getName()).append(datePostfix).append("` = '");
+				builder.append(s.getCompletionDate()).append("', `");
+			}
+			builder.append(bookPrefix).append(b.getName()).append(completedPostfix).append("` = '");
+			builder.append(b.getName()).append("', `");
+			builder.append(bookPrefix).append(b.getName()).append(datePostfix).append("` = '");
+			builder.append(b.isCompleted());
+		}
+
+		builder.append(" ").append(where).append("ID = ").append(record.getID()).append(";");
+		try {
+			executeQuery(builder.toString());
+		} catch (Exception ex) {
+			Logger.getLogger(DatabaseWrapper.class.getName()).log(Level.SEVERE, null, ex);
+		}
+	}
+
+	public Record newRecord() {
+		StringBuilder builder = new StringBuilder(insert + into + dataTable + " (`" + fieldPrefix + Record.getMasterField(0).getName() + "`) ");
+		builder.append(values).append(" ('").append(Record.getMasterField(0).getData()).append("');");
+		int ID;
+		try {
+			ID = runStatement(builder.toString());
+			return new Record(ID);
 		} catch (Exception ex) {
 			Logger.getLogger(DatabaseWrapper.class.getName()).log(Level.SEVERE, null, ex);
 			return null;
 		}
 	}
 
-	public void saveStudent(Student s) {
-		throw new UnsupportedOperationException();
-	}
-
-	public Student newStudent() {
-		throw new UnsupportedOperationException();
-		//TODO: create records;
-	}
-
-	public Vector<Record> getRecordsAsVector(){
+	public Vector<Listing> getRecordListingsAsVector() {
 		ResultSet resultSet;
-		Vector<Record> records = new Vector<>();
-		try{
-			resultSet = executeQuery(select + Student.studentFieldTableColumns[0][0] + ", " + Student.studentFieldTableColumns[0][1]
-					+ ", " + Student.studentFieldTableColumns[0][2] + " " + from + dataTable + ";");
-		}
-		catch(Exception ex){
-			Logger.getLogger(DatabaseWrapper.class.getName()).log(Level.SEVERE, null, ex);
-			//TODO: figure out how to log this exception so it reports this location without createing a duplicate error log.
-			return null;
-		}
+		Vector<Listing> vector = new Vector<>();
+		Listing r;
 		try {
-			Record r;
-			while(resultSet.next()){
-			 r = new Record(resultSet.getInt(Student.studentFieldTableColumns[0][0]),
-					resultSet.getNString(Student.studentFieldTableColumns[0][1]),
-					resultSet.getNString(Student.studentFieldTableColumns[0][2]));
-				records.add(r);
+			resultSet = executeQuery(select + "ID" + ", " + "`" + fieldPrefix + Record.getMasterField(0).getName()
+					+ "`" +  ", " + "`" + fieldPrefix + Record.getMasterField(1).getName() + "`" + " " + from + dataTable + ";");
+
+			while (resultSet.next()) {
+				r = new Listing(resultSet.getInt("ID"),
+						resultSet.getNString(fieldPrefix + Record.getMasterField(0).getName()),
+						resultSet.getNString(fieldPrefix + Record.getMasterField(1).getName()));
+				vector.add(r);
 			}
-		} catch (SQLException ex) {
+		} catch (Exception ex) {
 			Logger.getLogger(DatabaseWrapper.class.getName()).log(Level.SEVERE, null, ex);
 		}
-		return records;
+		return vector;
 	}
 
 	public void reconnectDatabase() {
@@ -103,24 +156,29 @@ public class DatabaseWrapper {
 			h2DatabaseConnection = ds.getConnection();
 		} catch (SQLException ex) {
 			Logger.getLogger(DatabaseWrapper.class.getName()).log(Level.SEVERE, null, ex);
-			//System.err.println("DatabaseConnectionError: " + ex.getMessage());
 		}
 	}
 
-	public void runStatement(String sqlstmt) {
+	public int runStatement(String sqlstmt) {
+		int ID = 0;
 		System.out.println(sqlstmt);
-		Statement stmt;
+		PreparedStatement stmt;
 		System.out.print("Status: ");
 		try {
-			stmt = h2DatabaseConnection.createStatement();
-			stmt.executeUpdate(sqlstmt);
+			stmt = h2DatabaseConnection.prepareStatement(sqlstmt, Statement.RETURN_GENERATED_KEYS);
+			stmt.executeUpdate();
+			ResultSet keys = stmt.getGeneratedKeys();
+			if (keys.next()) {
+				ID = keys.getInt(1);
+			}
 			stmt.close();
 			System.out.println("Success");
-
+			return ID;
 		} catch (SQLException ex) {
 			System.out.println("Failed");
 			//System.err.println("SQLException: " + ex.getMessage());
 			Logger.getLogger(DatabaseWrapper.class.getName()).log(Level.SEVERE, null, ex);
+			return ID;
 		}
 	}
 
@@ -133,14 +191,13 @@ public class DatabaseWrapper {
 			return result;
 		} catch (Exception ex) {
 			System.out.println("Failed");
-			//System.err.println("SQLException: " + ex.getMessage());
 			Logger.getLogger(DatabaseWrapper.class.getName()).log(Level.SEVERE, null, ex);
 			throw ex;
 		}
 	}
 
 	private ResultSet queryDatabase(String sqlstmt) throws Exception {
-		Statement select = h2DatabaseConnection.createStatement();
+		Statement select = h2DatabaseConnection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 		ResultSet result = select.executeQuery(sqlstmt);
 		return result;
 	}
@@ -148,7 +205,7 @@ public class DatabaseWrapper {
 	public void printResultSet(ResultSet result) {
 		try {
 			printQueryResults(result);
-			result.beforeFirst();
+			result.first();
 		} catch (SQLException ex) {
 			Logger.getLogger(DatabaseWrapper.class.getName()).log(Level.SEVERE, null, ex);
 		}
@@ -177,46 +234,244 @@ public class DatabaseWrapper {
 			h2DatabaseConnection.close();
 			h2DatabaseConnection = null;
 		} catch (SQLException ex) {
-			//System.err.println("DatabaseCloseError: " + ex.getMessage());
 			Logger.getLogger(DatabaseWrapper.class.getName()).log(Level.SEVERE, null, ex);
 		}
 	}
 
 	private boolean isDatabaseGenerated() {
-			String statement = select + "1 " + from + dataTable + ";";
-			boolean empty = false;
-			try {
-				executeQuery(statement);
-			} catch (Exception ex) {
-				empty = true;
-			}
-			if(empty){
-				return false;
-			}
+		String statement = select + "1 " + from + dataTable + ";";
+		boolean empty = false;
+		try {
+			executeQuery(statement);
+		} catch (Exception ex) {
+			empty = true;
+		}
+		if (empty) {
+			return false;
+		}
 		return true;
 	}
 
-	private void generateDatabase() {
-		String statement = create + table + dataTable + " ( ";
-			statement = statement.concat("ID INTEGER NOT NULL PRIMARY KEY");
-		for (int i = 0; i < Student.studentFieldTableColumns[0].length; i++) {
-			statement = statement.concat(", \"" + Student.studentFieldTableColumns[0][i] + "\" ");
-			statement = statement.concat(Student.studentFieldTableColumns[1][i]);
+	private void updateDatabase() {
+		if (!tableExists(dataTable)) {
+			createTable();
 		}
-		for (int i = 0; i < Book.bookNames.length; i++) {
-			for (int j = 0; j < Book.bookSections[i].length; j++) {
-				statement = statement.concat(", \"" + Book.bookNames[i] + "_");
-				statement = statement.concat(Book.bookSections[i][j] + "\" ");
-				statement = statement.concat(bool);
-				statement = statement.concat(", \"" + Book.bookNames[i] + "_");
-				statement = statement.concat(Book.bookSections[i][j] );
-				statement = statement.concat("_date" + "\" ");
-				statement = statement.concat(date);
-				//System.out.println(statement);
+	}
+
+	//TODO: fix this method and add to updateDatabase() so database can be changed based on a easily editable yml file.
+	private void updateTable() {
+		Field f;
+		String name, storageType, defaultValue, sectionName;
+		ResultSet result = getColumnProperties(dataTable);
+		for (int i = 0; i < Record.getFieldListSize(); i++) {
+			f = Record.getMasterField(i);
+			name = f.getName();
+			storageType = f.getStorageType();
+			defaultValue = f.getData();
+			if (!(resultSetContainsNameDataTypeAndDefaultValue(fieldPrefix + name, storageType, defaultValue, result) >= 0)) {
+				addColumn(name, storageType, defaultValue);
 			}
 		}
-		statement = statement.concat(" );");
-		runStatement(statement);
+		for (int i = 0; i < Book.bookNames.length; i++) {
+			name = Book.bookNames[i];
+			if (!(resultSetContainsNameAndDataType(bookPrefix + name + completedPostfix, bool, result) >= 0)) {
+				addColumn(bookPrefix + name + completedPostfix, bool, "FALSE");
+			}
+			if (!(resultSetContainsNameAndDataType(bookPrefix + name + datePostfix, date, result) >= 0)) {
+				addColumn(bookPrefix + name + datePostfix, date, "FALSE");
+			}
+			for (int j = 0; j < Book.bookSections[i].length; j++) {
+				sectionName = Book.bookSections[i][j];
+				if (!(resultSetContainsNameAndDataType(bookPrefix + name + "_" + sectionName + completedPostfix, bool, result) >= 0)) {
+					addColumn(bookPrefix + name + "_" + sectionName + completedPostfix, bool, "FALSE");
+				}
+				if (!(resultSetContainsNameAndDataType(bookPrefix + name + "_" + sectionName + datePostfix, date, result) >= 0)) {
+					addColumn(bookPrefix + name + "_" + sectionName + datePostfix, date, "FALSE");
+				}
+			}
+		}
+	}
+
+	private void addColumn(String columnName, String columnType, String defaultValue) {
+		String query = altar + table + "\"" + dataTable + "\" ADD " + columnName + " " + columnType + " DEFAULT \"" + defaultValue + "\";";
+		runStatement(query);
+	}
+
+	private void createTable() {
+		Field f;
+		StringBuilder builder = new StringBuilder(create + table + dataTable + " ( ");
+		builder.append("`ID` IDENTITY(1,1)");
+		for (int i = 0; i < Record.getFieldListSize(); i++) {
+			f = Record.getMasterField(i);
+			builder.append(", `").append(fieldPrefix).append(f.getName()).append("` ");
+			builder.append(f.getStorageType());
+		}
+		for (int i = 0; i < Book.bookNames.length; i++) {
+				builder.append(", `").append(bookPrefix).append(Book.bookNames[i]);
+				builder.append(completedPostfix).append("` ");
+				builder.append(bool);
+				builder.append(", `").append(bookPrefix).append(Book.bookNames[i]);
+				builder.append(datePostfix).append("` ");
+				builder.append(date);
+			for (int j = 0; j < Book.bookSections[i].length; j++) {
+				builder.append(", `").append(bookPrefix).append(Book.bookNames[i]).append("_");
+				builder.append(Book.bookSections[i][j]).append(completedPostfix).append("` ");
+				builder.append(bool);
+				builder.append(", `").append(bookPrefix).append(Book.bookNames[i]).append("_");
+				builder.append(Book.bookSections[i][j]).append(datePostfix).append("` ");
+				builder.append(date);
+			}
+		}
+		builder.append(", PRIMARY KEY (ID) );");
+		runStatement(builder.toString());
+
+	}
+
+	public boolean tableExists(String table) {
+		ResultSet s;
+		try {
+			s = executeQuery("select * from information_schema.tables where table_name = '" + dataTable + "'");
+			if (s.first()) {
+				return true;
+			}
+		} catch (Exception ex) {
+			Logger.getLogger(DatabaseWrapper.class.getName()).log(Level.SEVERE, null, ex);
+		}
+		return false;
+	}
+
+	public ResultSet getColumnProperties(String table) {
+		try {
+			printResultSet(h2DatabaseConnection.getMetaData().getColumns(null, null, dataTable, null));
+			ResultSet r = h2DatabaseConnection.getMetaData().getColumns(null, null, dataTable, null);
+			return r;
+		} catch (Exception ex) {
+			Logger.getLogger(DatabaseWrapper.class.getName()).log(Level.SEVERE, null, ex);
+			return null;
+		}
+	}
+
+	public String setDefaultValue(String fieldName) {
+		throw new UnsupportedOperationException();
+	}
+
+	public String getDefaultValue(int rowNumber, ResultSet results) {
+		String s;
+		try {
+			results.absolute(rowNumber);
+			s = results.getString(13);
+			return s;
+		} catch (SQLException ex) {
+			Logger.getLogger(DatabaseWrapper.class.getName()).log(Level.SEVERE, null, ex);
+			return null;
+		}
+	}
+
+	public int resultSetContainsNameDataTypeAndDefaultValue(String fieldName, String fieldDataType, String defaultValue, ResultSet results) {
+		boolean contains = false;
+		int containsInRow = resultSetContainsNameAndDataType(fieldName, fieldDataType, results);
+		if (containsInRow >= 0) {
+			try {
+				results.absolute(containsInRow);
+				contains = defaultValue.equals(results.getString("COLUMN_DEFAULT"));
+				if (contains) {
+					return containsInRow;
+				}
+			} catch (SQLException ex) {
+				Logger.getLogger(DatabaseWrapper.class.getName()).log(Level.SEVERE, null, ex);
+			}
+		}
+		return -1;
+	}
+
+	public int resultSetContainsNameAndDataType(String fieldName, String fieldDataType, ResultSet results) {
+		boolean contains = false;
+		int containsInRow = resultSetContainsName(fieldName, results);
+		if (containsInRow >= 0) {
+			try {
+				results.absolute(containsInRow);
+				contains = fieldDataType.equals(results.getString("TYPE_NAME"));
+				if (contains) {
+					return containsInRow;
+				}
+			} catch (SQLException ex) {
+				Logger.getLogger(DatabaseWrapper.class.getName()).log(Level.SEVERE, null, ex);
+			}
+		}
+		return -1;
+	}
+
+	public int resultSetContainsName(String fieldName, ResultSet results) {
+		int contains = -1;
+		try {
+			int i = 0;
+			results.beforeFirst();
+			while (results.next()) {
+				if (fieldName.equals(results.getString("COLUMN_NAME"))) {
+					return results.getRow();
+				}
+			}
+		} catch (SQLException ex) {
+			Logger.getLogger(DatabaseWrapper.class.getName()).log(Level.SEVERE, null, ex);
+		}
+		return contains;
+	}
+
+	private Record loadRecordData(ResultSet result, int ID) {
+		Record s = new Record(ID);
+		ArrayList<Field> fields = new ArrayList<>();
+		Field master;
+		Field f;
+		try {
+			result.first();
+			for (int i = 0; i < Record.getMasterBookList().size(); i++) {
+				master = Record.getMasterField(i);
+				f = new Field("" + master.getName(), "" + result.getString(fieldPrefix + master.getName()), "" + master.getType(), "" + master.getDisplayLength());
+				fields.add(f);
+				i++;
+			}
+			result.first();
+		} catch (SQLException ex) {
+			Logger.getLogger(DatabaseWrapper.class.getName()).log(Level.SEVERE, null, ex);
+			return null;
+		}
+		s.setFieldList(fields);
+		s.setBookList(loadBookDataAsArrayList(result));
+		return s;
+	}
+
+	private ArrayList<Book> loadBookDataAsArrayList(ResultSet result) {
+		ArrayList<Book> bookList = new ArrayList<>();
+		ArrayList<Section> sections;
+		Section section;
+		Book book;
+		boolean b;
+		Date d;
+
+		for (int i = 0; i < Book.bookNames.length; i++) {
+			sections = new ArrayList<>();
+			for (int j = 0; j < Book.bookSections[i].length; j++) {
+				try {
+					b = result.getBoolean(bookPrefix + Book.bookNames[i] + "_" + Book.bookSections[i][j] + completedPostfix);
+					d = result.getDate(bookPrefix + Book.bookNames[i] + "_" + Book.bookSections[i][j] + datePostfix);
+					section = new Section(Book.bookSections[i][j], b, d);
+					sections.add(section);
+				} catch (SQLException ex) {
+					Logger.getLogger(DatabaseWrapper.class.getName()).log(Level.SEVERE, null, ex);
+					return null;
+				}
+			}
+			try {
+				b = result.getBoolean(bookPrefix + Book.bookNames[i] + completedPostfix);
+				d = result.getDate(bookPrefix + Book.bookNames[i] + datePostfix);
+			} catch (SQLException ex) {
+				Logger.getLogger(DatabaseWrapper.class.getName()).log(Level.SEVERE, null, ex);
+				return null;
+			}
+			book = new Book(Book.bookNames[i], sections, b, d);
+			bookList.add(book);
+		}
+		return bookList;
 	}
 }
 /*
