@@ -1,6 +1,12 @@
 package awana.database;
 
+import java.awt.Dimension;
 import java.util.ArrayList;
+import javax.swing.BoxLayout;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSeparator;
+import javax.swing.JTabbedPane;
 
 /**
  *
@@ -11,34 +17,34 @@ public class Record {
 	private static ArrayList<Field> masterFieldList = new ArrayList<>();
 	private static ArrayList<Book> masterBookList = new ArrayList<>();
 	private static String[] fieldNameList = {
-		"First Name", "Last Name", "Email", "Legal Guardian", "Legal Guardian Phone",
-		"Mother", "Mother's Cell", "Father", "Father's Cell", "Parent Email",
-		"Address Line1", "Address Line2", "City", "State/Province", "Zip",
-		"Country", "County", "Emergency Contact", "Emergency Contact Phone"
+		"First Name", "Last Name", "Birth Date", "Email", "Legal Guardian",
+		"Legal Guardian Phone", "Mother", "Mother Cell", "Father", "Father Cell",
+		"Parent Email", "Address Line1", "Address Line2", "City", "State/Province",
+		"Zip", "Country", "County", "Emergency Contact", "Emergency Contact Phone"
 	};
 	private static String[] fieldStorageType = {
 		"VARCHAR(100)", "VARCHAR(100)", "VARCHAR(100)", "VARCHAR(100)", "VARCHAR(100)",
 		"VARCHAR(100)", "VARCHAR(100)", "VARCHAR(100)", "VARCHAR(100)", "VARCHAR(100)",
 		"VARCHAR(100)", "VARCHAR(100)", "VARCHAR(100)", "VARCHAR(100)", "VARCHAR(100)",
-		"VARCHAR(100)", "VARCHAR(100)", "VARCHAR(100)", "VARCHAR(100)"
+		"VARCHAR(100)", "VARCHAR(100)", "VARCHAR(100)", "VARCHAR(100)", "VARCHAR(100)"
 	};
 	private static String[] fieldDataType = {
-		"name", "name", "email", "name", "phone",
-		"name", "phone", "name", "phone", "email",
-		"string", "string", "string", "string", "int",
-		"string", "string", "name", "phone"
+		"name", "name", "date", "email", "name",
+		"phone","name", "phone", "name", "phone",
+		"email", "string", "string", "string", "string5",
+		"int", "string10", "string10", "name", "phone"
 	};
 	private static int[] fieldDisplayLength;
 	private static String[] fieldTypes = {
-		"default", "int", "string", "name", "email", "phone"
+		"default", "int", "string5", "string10", "string20", "string", "name", "email", "phone", "date"
 	};
 	private static int[] fieldTypeDefaultDisplayLength = {
-		10, 10, 30, 15, 20, 12
+		10, 8, 5, 10, 20, 30, 15, 20, 12, 10
 	};
 	private static String fieldDefaultValue[] = {
 		null, null, null, null, null,
 		null, null, null, null, null,
-		null, null, null, "CO", null,
+		null, null, null, null, "CO",
 		null, null, null, null, null
 	};
 	private int ID;
@@ -51,7 +57,7 @@ public class Record {
 		this.ID = ID;
 	}
 
-	public static void loadMasterFields() {
+	public static void loadMasterData() {
 		Field f;
 		for (int i = 0; i < fieldNameList.length; i++) {
 			f = new Field(fieldNameList[i], fieldDefaultValue[i], fieldDataType[i], fieldStorageType[i], getDisplayLengthByType(fieldDataType[i]));
@@ -118,10 +124,6 @@ public class Record {
 		return new Listing(ID, this.get("First Name").getData(), this.get("Last Name").getData());
 	}
 
-	public static int masterFieldListSize(){
-		return masterFieldList.size();
-	}
-
 	public static Field getMasterField(int number) {
 		return masterFieldList.get(number);
 	}
@@ -130,7 +132,11 @@ public class Record {
 		return masterBookList.get(number);
 	}
 
-	public static int getFieldListSize() {
+	public int getFieldListSize() {
+		return fieldList.size();
+	}
+
+	public static int getMasterFieldListSize() {
 		return masterFieldList.size();
 	}
 
@@ -153,7 +159,7 @@ public class Record {
 		String oldName = null;
 		for (int i = 0; i < masterBookList.size(); i++) {
 			group = masterBookList.get(i).getGroup();
-			if(oldName == null && !group.equals(oldName)){
+			if(oldName == null || !group.equals(oldName)){
 				names.add(group);
 			}
 			oldName = group;
@@ -172,7 +178,7 @@ public class Record {
 		return names;
 	}
 
-	public static ArrayList<Book> getBooksByGroup(String group){
+	public static ArrayList<Book> getMasterBooksByGroup(String group){
 		ArrayList<Book> books = new ArrayList<>();
 		for(int i = 0; i < masterBookList.size(); i++){
 			Book book = masterBookList.get(i);
@@ -181,6 +187,56 @@ public class Record {
 			}
 		}
 		return books;
+	}
+
+	private ArrayList<Book> getBooksByGroup(String group) {
+		ArrayList<Book> groupBooks = new ArrayList<>();
+		for(int i = 0; i < books.size(); i++){
+			Book book = books.get(i);
+			if(book.getGroup().equals(group)){
+				groupBooks.add(book);
+			}
+		}
+		return groupBooks;
+	}
+
+	public void draw(JTabbedPane pane){
+		setupFieldTab(pane);
+		setupBookTabs(pane);
+	}
+
+	public void setupFieldTab(JTabbedPane pane) {
+		JPanel contactPane = new JPanel();
+		contactPane.setName("Contact");
+		contactPane.setLayout(new WrapLayout());
+		contactPane.setSize(new Dimension(100, 100));
+		for (int i = 0; i < getFieldListSize(); i++) {
+			contactPane.add(getField(i).getRenderable());
+		}
+		JScrollPane scrollPane = new JScrollPane(contactPane, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+		scrollPane.setName("Contact");
+		scrollPane.getVerticalScrollBar().setUnitIncrement(12);
+		pane.add(scrollPane.getName(), scrollPane);
+	}
+
+	public void setupBookTabs(JTabbedPane pane) {
+		ArrayList<String> bookTabNames = getBookGroups();
+		for (int i = 0; i < bookTabNames.size(); i++) {
+			JPanel jPanel = new JPanel();
+			BoxLayout layout = new BoxLayout(jPanel, BoxLayout.Y_AXIS);
+			jPanel.setLayout(layout);
+			jPanel.setName(bookTabNames.get(i));
+			ArrayList<Book> bookGroup = getBooksByGroup(bookTabNames.get(i));
+			for (int k = 0; k < bookGroup.size(); k++) {
+				jPanel.add(bookGroup.get(k).getRenderable());
+				jPanel.add(new JSeparator());
+			}
+			JScrollPane scrollPane = new JScrollPane(jPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+			scrollPane.setName(bookTabNames.get(i));
+			scrollPane.getVerticalScrollBar().setUnitIncrement(12);
+			pane.add(scrollPane.getName(), scrollPane);
+			scrollPane.validate();
+		}
 	}
 
 	@Override
@@ -202,5 +258,19 @@ public class Record {
 		int hash = 5;
 		hash = 79 * hash + this.ID;
 		return hash;
+	}
+
+	@Override
+	public String toString(){
+		StringBuilder b = new StringBuilder("\n" + getID() + " Fields:\n");
+		for(int i = 0; i < fieldList.size(); i++){
+			b.append(fieldList.get(i).toString());
+		}
+		b.append("\n Books:");
+		for(int i = 0; i < books.size(); i++){
+			b.append(books.get(i).toString());
+		}
+		b.append("\n");
+		return b.toString();
 	}
 }
