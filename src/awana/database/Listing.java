@@ -16,6 +16,16 @@ public class Listing {
 		this.lastName = lastName;
 	}
 
+	public void update(Record r){
+		this.firstName = r.getField(1).getData();
+		this.lastName = r.getField(2).getData();
+	}
+
+	public void update(String firstName, String LastName){
+		this.firstName = firstName;
+		this.lastName = lastName;
+	}
+
 	public int getID() {
 		return ID;
 	}
@@ -82,6 +92,7 @@ public class Listing {
 		return getFullNameLastFirst() + " (" + getID() + ")";
 	}
 
+	@Override
 	public boolean equals(Object o){
 		if(o == null){
 			return false;

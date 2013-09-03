@@ -33,6 +33,7 @@ public class DatabaseWrapper {
 	public static final String bookPrefix = "book_";
 	public static final String completedPostfix = "_completed";
 	public static final String datePostfix = "_date";
+	public static final String bigInt = "BIGINT";
 	private String dataTable = "DIRECTORY";
 	private Connection h2DatabaseConnection;
 
@@ -73,31 +74,25 @@ public class DatabaseWrapper {
 
 	public void saveRecord(Record record) {
 		Field f;
-		StringBuilder builder = new StringBuilder(update + dataTable + set + " `");
-		for (int i = 0; i < Record.getFieldListSize(); i++) {
+		StringBuilder builder = new StringBuilder(update + dataTable + " " + set);
+		for (int i = 0; i < record.getFieldListSize(); i++) {
 			f = record.getField(i);
-			builder.append(fieldPrefix).append(f.getName()).append("` = '").append(f.getData()).append("', `");
+			builder.append("`").append(fieldPrefix).append(f.getName()).append("` = ");
+			if (f.getData() != null) {
+				builder.append("'").append(f.getData()).append("', ");
+			} else {
+				builder.append("null, ");
+			}
 		}
 		Book b;
 		for (int i = 0; i < record.getBookListSize(); i++) {
 			b = record.getBook(i);
-			Section s;
-			for (int j = 0; j < b.getNumberOfSections(); j++) {
-				s = b.getSection(j);
-				builder.append(bookPrefix).append(b.getName()).append(s.getName()).append(completedPostfix).append("` = '");
-				builder.append(s.isCompleted()).append("', `");
-				builder.append(bookPrefix).append(b.getName()).append(s.getName()).append(datePostfix).append("` = '");
-				builder.append(s.getCompletionDate()).append("', `");
-			}
-			builder.append(bookPrefix).append(b.getName()).append(completedPostfix).append("` = '");
-			builder.append(b.getName()).append("', `");
-			builder.append(bookPrefix).append(b.getName()).append(datePostfix).append("` = '");
-			builder.append(b.isCompleted());
+			builder.append(b.getSaveString()).append(", ");
 		}
-
-		builder.append(" ").append(where).append("ID = ").append(record.getID()).append(";");
+		builder.delete(builder.lastIndexOf(","), builder.lastIndexOf(" ") + 1);
+		builder.append(" ").append(where).append("`ID` = ").append(record.getID()).append(";");
 		try {
-			executeQuery(builder.toString());
+			runStatement(builder.toString());
 		} catch (Exception ex) {
 			Logger.getLogger(DatabaseWrapper.class.getName()).log(Level.SEVERE, null, ex);
 		}
@@ -105,7 +100,7 @@ public class DatabaseWrapper {
 
 	public Record newRecord() {
 		StringBuilder builder = new StringBuilder(insert + into + dataTable + " (`" + fieldPrefix + Record.getMasterField(0).getName() + "`) ");
-		builder.append(values).append(" ('").append(Record.getMasterField(0).getData()).append("');");
+		builder.append(values).append(" (").append(Record.getMasterField(0).getData()).append(");");
 		int ID;
 		try {
 			ID = runStatement(builder.toString());
@@ -122,7 +117,7 @@ public class DatabaseWrapper {
 		Listing r;
 		try {
 			resultSet = executeQuery(select + "ID" + ", " + "`" + fieldPrefix + Record.getMasterField(0).getName()
-					+ "`" +  ", " + "`" + fieldPrefix + Record.getMasterField(1).getName() + "`" + " " + from + dataTable + ";");
+					+ "`" + ", " + "`" + fieldPrefix + Record.getMasterField(1).getName() + "`" + " " + from + dataTable + ";");
 
 			while (resultSet.next()) {
 				r = new Listing(resultSet.getInt("ID"),
@@ -145,7 +140,7 @@ public class DatabaseWrapper {
 
 	private void createDatabaseConnection() {
 		JdbcDataSource dataSource = new JdbcDataSource();
-		dataSource.setURL("jdbc:h2:Data/AWANA");
+		dataSource.setURL("jdbc:h2:Data/AWANA;DB_CLOSE_ON_EXIT=FALSE");
 		dataSource.setUser("sa");
 		dataSource.setPassword("sa");
 		connectToDatabase(dataSource);
@@ -263,7 +258,7 @@ public class DatabaseWrapper {
 		Field f;
 		String name, storageType, defaultValue, sectionName;
 		ResultSet result = getColumnProperties(dataTable);
-		for (int i = 0; i < Record.getFieldListSize(); i++) {
+		for (int i = 0; i < Record.getMasterFieldListSize(); i++) {
 			f = Record.getMasterField(i);
 			name = f.getName();
 			storageType = f.getStorageType();
@@ -277,16 +272,16 @@ public class DatabaseWrapper {
 			if (!(resultSetContainsNameAndDataType(bookPrefix + name + completedPostfix, bool, result) >= 0)) {
 				addColumn(bookPrefix + name + completedPostfix, bool, "FALSE");
 			}
-			if (!(resultSetContainsNameAndDataType(bookPrefix + name + datePostfix, date, result) >= 0)) {
-				addColumn(bookPrefix + name + datePostfix, date, "FALSE");
+			if (!(resultSetContainsNameAndDataType(bookPrefix + name + datePostfix, varchar100, result) >= 0)) {
+				addColumn(bookPrefix + name + datePostfix, varchar100, "FALSE");
 			}
 			for (int j = 0; j < Book.bookSections[i].length; j++) {
 				sectionName = Book.bookSections[i][j];
 				if (!(resultSetContainsNameAndDataType(bookPrefix + name + "_" + sectionName + completedPostfix, bool, result) >= 0)) {
 					addColumn(bookPrefix + name + "_" + sectionName + completedPostfix, bool, "FALSE");
 				}
-				if (!(resultSetContainsNameAndDataType(bookPrefix + name + "_" + sectionName + datePostfix, date, result) >= 0)) {
-					addColumn(bookPrefix + name + "_" + sectionName + datePostfix, date, "FALSE");
+				if (!(resultSetContainsNameAndDataType(bookPrefix + name + "_" + sectionName + datePostfix, varchar100, result) >= 0)) {
+					addColumn(bookPrefix + name + "_" + sectionName + datePostfix, varchar100, "FALSE");
 				}
 			}
 		}
@@ -301,25 +296,34 @@ public class DatabaseWrapper {
 		Field f;
 		StringBuilder builder = new StringBuilder(create + table + dataTable + " ( ");
 		builder.append("`ID` IDENTITY(1,1)");
-		for (int i = 0; i < Record.getFieldListSize(); i++) {
+		for (int i = 0; i < Record.getMasterFieldListSize(); i++) {
 			f = Record.getMasterField(i);
 			builder.append(", `").append(fieldPrefix).append(f.getName()).append("` ");
 			builder.append(f.getStorageType());
+			if (f.getData() != null) {
+				builder.append(" DEFAULT ").append("'").append(f.getData()).append("'");
+			} else {
+				builder.append(" DEFAULT ").append(f.getData());
+			}
 		}
 		for (int i = 0; i < Book.bookNames.length; i++) {
-				builder.append(", `").append(bookPrefix).append(Book.bookNames[i]);
-				builder.append(completedPostfix).append("` ");
-				builder.append(bool);
-				builder.append(", `").append(bookPrefix).append(Book.bookNames[i]);
-				builder.append(datePostfix).append("` ");
-				builder.append(date);
+			builder.append(", `").append(bookPrefix).append(Book.bookNames[i]);
+			builder.append(completedPostfix).append("` ");
+			builder.append(bool);
+			builder.append(" DEFAULT ").append("FALSE");
+			builder.append(", `").append(bookPrefix).append(Book.bookNames[i]);
+			builder.append(datePostfix).append("` ");
+			builder.append(varchar100);
+			builder.append(" DEFAULT ").append("NULL");
 			for (int j = 0; j < Book.bookSections[i].length; j++) {
 				builder.append(", `").append(bookPrefix).append(Book.bookNames[i]).append("_");
 				builder.append(Book.bookSections[i][j]).append(completedPostfix).append("` ");
 				builder.append(bool);
+				builder.append(" DEFAULT ").append("FALSE");
 				builder.append(", `").append(bookPrefix).append(Book.bookNames[i]).append("_");
 				builder.append(Book.bookSections[i][j]).append(datePostfix).append("` ");
-				builder.append(date);
+				builder.append(varchar100);
+				builder.append(" DEFAULT ").append("NULL");
 			}
 		}
 		builder.append(", PRIMARY KEY (ID) );");
@@ -424,11 +428,10 @@ public class DatabaseWrapper {
 		Field f;
 		try {
 			result.first();
-			for (int i = 0; i < Record.getMasterBookList().size(); i++) {
+			for (int i = 0; i < Record.getMasterFieldListSize(); i++) {
 				master = Record.getMasterField(i);
-				f = new Field("" + master.getName(), "" + result.getString(fieldPrefix + master.getName()), "" + master.getType(), "" + master.getDisplayLength());
+				f = new Field(master.getName(), result.getString(fieldPrefix + master.getName()), master.getType(), master.getDisplayLength());
 				fields.add(f);
-				i++;
 			}
 			result.first();
 		} catch (SQLException ex) {
@@ -445,16 +448,16 @@ public class DatabaseWrapper {
 		ArrayList<Section> sections;
 		Section section;
 		Book book;
-		boolean b;
-		Date d;
+		boolean isCompleted;
+		String date;
 
 		for (int i = 0; i < Book.bookNames.length; i++) {
 			sections = new ArrayList<>();
 			for (int j = 0; j < Book.bookSections[i].length; j++) {
 				try {
-					b = result.getBoolean(bookPrefix + Book.bookNames[i] + "_" + Book.bookSections[i][j] + completedPostfix);
-					d = result.getDate(bookPrefix + Book.bookNames[i] + "_" + Book.bookSections[i][j] + datePostfix);
-					section = new Section(Book.bookSections[i][j], b, d);
+					isCompleted = result.getBoolean(bookPrefix + Book.bookNames[i] + "_" + Book.bookSections[i][j] + completedPostfix);
+					date = result.getString(bookPrefix + Book.bookNames[i] + "_" + Book.bookSections[i][j] + datePostfix);
+					section = new Section(Book.bookSections[i][j], isCompleted, date);
 					sections.add(section);
 				} catch (SQLException ex) {
 					Logger.getLogger(DatabaseWrapper.class.getName()).log(Level.SEVERE, null, ex);
@@ -462,13 +465,13 @@ public class DatabaseWrapper {
 				}
 			}
 			try {
-				b = result.getBoolean(bookPrefix + Book.bookNames[i] + completedPostfix);
-				d = result.getDate(bookPrefix + Book.bookNames[i] + datePostfix);
+				isCompleted = result.getBoolean(bookPrefix + Book.bookNames[i] + completedPostfix);
+				date = result.getString(bookPrefix + Book.bookNames[i] + datePostfix);
 			} catch (SQLException ex) {
 				Logger.getLogger(DatabaseWrapper.class.getName()).log(Level.SEVERE, null, ex);
 				return null;
 			}
-			book = new Book(Book.bookNames[i], sections, b, d);
+			book = new Book(Book.bookNames[i], sections, isCompleted, date);
 			bookList.add(book);
 		}
 		return bookList;

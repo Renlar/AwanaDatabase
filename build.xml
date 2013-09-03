@@ -71,4 +71,14 @@
     nbproject/build-impl.xml file. 
 
     -->
+    <target name="-post-jar">
+    <jar jarfile="dist/AwanaDatabase.jar">
+        <zipfileset src="${dist.jar}" excludes="META-INF/*" />
+        <zipfileset src="lib/H2_Database/h2-1.3.170.jar" excludes="META-INF/*" />
+        <zipfileset src="lib/SnakeYAML 1.11/snakeyaml-1.11.jar" excludes="META-INF/*" />
+        <manifest>
+            <attribute name="Main-Class" value="awana.database.DirectoryPage"/>
+        </manifest>
+    </jar>
+</target>
 </project>
