@@ -1,18 +1,30 @@
 package awana.database;
 
+import static awana.database.DatabaseWrapper.bookPrefix;
+import static awana.database.DatabaseWrapper.completedPostfix;
+import static awana.database.DatabaseWrapper.datePostfix;
+import java.awt.Dimension;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.Date;
+import javax.swing.JCheckBox;
+import javax.swing.JPanel;
+import javax.swing.JSeparator;
 
 /**
  *
  * @author Renlar
  */
-public class Book {
+public class Book implements ItemListener {
+
 	public static final String[] bookNames = {
-		"T&T_Ultimate Adventure 1","T&T_Ultimate Adventure 2","T&T_Ultimate Challenge 1","T&T_Ultimate Challenge 2",
-		"Treck_Treck Check","Treck_Roadsign Series","Treck_Dashboard Series","Treck_Billboard Series",
-		"Journey_Faith Foundations", "Journey_Main Study 1", "Journey_Main Study 2", "Journey_Main Study 3", "Journey_Main Study 4",
-		"Joureny_Elective 1", "Joureny_Elective 2", "Joureny_Elective 3", "Joureny_Elective 4", "Journey_Bible Reading"};
+		"T&T_Ultimate Adventure 1", "T&T_Ultimate Adventure 2", "T&T_Ultimate Challenge 1", "T&T_Ultimate Challenge 2",
+		"Trek_Treck Check", "Trek_Roadsign Series", "Trek_Dashboard Series", "Trek_Billboard Series",
+		"Journey_Faith Foundations", "Journey_Main Study 1", "Journey_Elective 1", "Journey_Main Study 2",
+		"Journey_Elective 2", "Journey_Main Study 3", "Journey_Elective 3", "Journey_Main Study 4","Journey_Elective 4",
+		"Journey_Bible Reading"
+	};
 	public static final String[][] bookSections = {
 		//1
 		{"Discovery 1", "Discovery 2", "Discovery 3", "Discovery 4", "Discovery 5", "Discovery 6", "Discovery 7", "Discovery 8"},
@@ -70,76 +82,76 @@ public class Book {
 			"2 Thessalonians", "1 Timothy", "2 Timothy", "Titus", "Philemon", "Hebrews", "James",
 			"1 Peter", "2 Peter", "1 John", "2 John", "3 John", "Jude", "Revelation"}
 	};
-
 	private ArrayList<Section> sections;
 	private String group;
 	private String name;
 	private boolean completed;
-	private Date completionDate;
+	private String completionDate;
+	private JCheckBox checkBox;
 
-	public Book(String groupAndName, ArrayList<Section> sections, boolean completed, Date completionDate){
+	public Book(String groupAndName, ArrayList<Section> sections, boolean completed, String completionDate) {
 		setGroupAndName(groupAndName);
 		this.sections = sections;
 		this.completed = completed;
 		this.completionDate = completionDate;
 	}
 
-	private void setGroupAndName(String groupAndName){
+	private void setGroupAndName(String groupAndName) {
 		int index = groupAndName.indexOf('_');
-		group = groupAndName.substring(0, index - 1);
+		group = groupAndName.substring(0, index);
 		name = groupAndName.substring(index + 1);
 	}
 
-	public String getFullName(){
+	public String getFullName() {
 		return group + "_" + name;
 	}
 
-	public String getGroup(){
+	public String getGroup() {
 		return group;
 	}
 
-	public String getName(){
+	public String getName() {
 		return name;
 	}
 
-	public int getNumberOfSections(){
+	public int getNumberOfSections() {
 		return sections.size();
 	}
 
-	public boolean isCompleted(){
+	public boolean isCompleted() {
 		return completed;
 	}
 
-	public void setCompleted(boolean completed){
+	public void setCompleted(boolean completed) {
 		this.completed = completed;
-		if(completed == true){
-			completionDate = new Date();
+		if (completed == true) {
+			completionDate = System.currentTimeMillis() + "";
 			setAllSectionsCompleted();
-		}else{
+		} else {
 			completionDate = null;
 		}
 	}
 
-	public ArrayList<Section> getCompletedSections(){
+	public ArrayList<Section> getCompletedSections() {
 		ArrayList<Section> completedSections = new ArrayList<>();
-		for(int i = 0; i < sections.size(); i++){
+		for (int i = 0; i < sections.size(); i++) {
 			Section test = sections.get(i);
-			if(test.isCompleted()){
+			if (test.isCompleted()) {
 				completedSections.add(test);
 			}
 		}
 		return completedSections;
 	}
 
-	public Date getCompletionDate(){
-		return (Date) completionDate.clone();
+	public String getCompletionDate() {
+		return completionDate;
 	}
 
-	private void setAllSectionsCompleted(){
-			Section check;
-		for(int i = 0; i < sections.size(); i++){
+	private void setAllSectionsCompleted() {
+		Section check;
+		for (int i = 0; i < sections.size(); i++) {
 			check = sections.get(i);
-			if(!check.isCompleted()){
+			if (!check.isCompleted()) {
 				check.setCompleted(true);
 			}
 		}
@@ -147,5 +159,61 @@ public class Book {
 
 	public Section getSection(int i) {
 		return sections.get(i);
+	}
+
+	public JPanel getRenderable() {
+		JPanel panel = new JPanel();
+		panel.setName(getName());
+		panel.setSize(new Dimension(1, 1));
+		panel.setLayout(new WrapLayout());
+		checkBox = new JCheckBox(getName(), isCompleted());
+		checkBox.addItemListener(this);
+		panel.add(checkBox);
+		panel.add(new JSeparator());
+		if (getNumberOfSections() > 1) {
+			for (int j = 0; j < getNumberOfSections(); j++) {
+				panel.add(getSection(j).getRenderable());
+			}
+		}
+		return panel;
+	}
+
+	@Override
+	public void itemStateChanged(ItemEvent e) {
+		setCompleted(checkBox.isSelected());
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder b = new StringBuilder("\n" + getName() + " Group:" + getGroup() + " Completed:" + isCompleted());
+		for (int i = 0; i < sections.size(); i++) {
+			b.append("\n").append(sections.get(i).toString());
+		}
+		return b.toString();
+	}
+
+	public String getSaveString() {
+		StringBuilder builder = new StringBuilder();
+		Section s;
+		for (int j = 0; j < getNumberOfSections(); j++) {
+			s = getSection(j);
+			builder.append("`").append(bookPrefix).append(getGroup()).append("_").append(getName()).append("_").append(s.getName()).append(completedPostfix);
+			builder.append("` = '").append(s.isCompleted()).append("', `");
+			builder.append(bookPrefix).append(getGroup()).append("_").append(getName()).append("_").append(s.getName()).append(datePostfix).append("` = ");
+			if (s.isCompleted()) {
+				builder.append(s.getCompletionDate()).append(", ");
+			} else {
+				builder.append("null, ");
+			}
+		}
+		builder.append("`").append(bookPrefix).append(getGroup()).append("_").append(getName()).append(completedPostfix).append("` = '");
+		builder.append(isCompleted()).append("', `");
+		builder.append(bookPrefix).append(getGroup()).append("_").append(getName()).append(datePostfix).append("` = ");
+		if (isCompleted()) {
+			builder.append(getCompletionDate());
+		} else {
+			builder.append("null");
+		}
+		return builder.toString();
 	}
 }

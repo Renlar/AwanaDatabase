@@ -1,43 +1,33 @@
 package awana.database;
 
 import java.awt.Color;
-import java.awt.FlowLayout;
-import java.awt.image.ImageObserver;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.util.Vector;
 import javax.swing.DefaultListModel;
-import javax.swing.JCheckBox;
-import javax.swing.JComponent;
-import javax.swing.JFormattedTextField;
-import javax.swing.JLabel;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextField;
 import javax.swing.ListModel;
 
 /**
  *
  * @author Renlar
  */
-public class DirectoryPage extends javax.swing.JFrame {
+public class DirectoryPage extends javax.swing.JFrame{
 
-	private ArrayList<JComponent> tabs;
-	private Vector<Listing> records;
+	private static Vector<Listing> recordListings;
+	private static DatabaseWrapper databaseWrapper;
 	private Vector<Listing> displayList;
-	private DatabaseWrapper databaseWrapper;
 	private Record selectedRecord;
+	Shutdown s = new Shutdown(this);
 
 	/**
 	 * Creates new form DirectoryPage
 	 */
 	public DirectoryPage() {
 		initComponents();
-		Record.loadMasterFields(); //do not remove temporary record load fix will be replaced with dynamic loading once variable yml field loading is supproted
+		Record.loadMasterData(); //do not remove temporary record load fix will be replaced with dynamic loading once variable yml field loading is supproted
 		databaseWrapper = new DatabaseWrapper();
-		loadSortAndDisplayRecordNames();
-		tabs = new ArrayList<>();
+		loadSortAndDisplayListings();
 	}
 
 	/**
@@ -54,8 +44,6 @@ public class DirectoryPage extends javax.swing.JFrame {
         newRecord = new javax.swing.JButton();
         deleteRecord = new javax.swing.JButton();
         searchBox = new javax.swing.JTextField();
-        menuBar = new javax.swing.JMenuBar();
-        fileMenu = new javax.swing.JMenu();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -67,6 +55,11 @@ public class DirectoryPage extends javax.swing.JFrame {
         recordItemList.setName(""); // NOI18N
         recordItemList.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
+                listingSelected(evt);
+            }
+        });
+        recordItemList.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
+            public void mouseDragged(java.awt.event.MouseEvent evt) {
                 listingSelected(evt);
             }
         });
@@ -89,6 +82,7 @@ public class DirectoryPage extends javax.swing.JFrame {
         searchBox.setForeground(new java.awt.Color(150, 150, 150));
         searchBox.setText("Search");
         searchBox.setName(""); // NOI18N
+        searchBox.setPreferredSize(new java.awt.Dimension(200, 25));
         searchBox.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusGained(java.awt.event.FocusEvent evt) {
                 searchBoxFocusGainedHandler(evt);
@@ -102,11 +96,6 @@ public class DirectoryPage extends javax.swing.JFrame {
                 searchBoxKeyTypedHandler(evt);
             }
         });
-
-        fileMenu.setText("File");
-        menuBar.add(fileMenu);
-
-        setJMenuBar(menuBar);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -134,7 +123,7 @@ public class DirectoryPage extends javax.swing.JFrame {
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(searchBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(recordScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 352, Short.MAX_VALUE)
+                        .addComponent(recordScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 368, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(newRecord)
@@ -148,7 +137,9 @@ public class DirectoryPage extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void newRecordHandler(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_newRecordHandler
+		saveCurrentRecord();
 		newRecord();
+		updateRecordData();
     }//GEN-LAST:event_newRecordHandler
 
     private void deleteRecordHandler(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_deleteRecordHandler
@@ -175,6 +166,7 @@ public class DirectoryPage extends javax.swing.JFrame {
 			databaseWrapper.deleteListing(delete);
 			removeAndUpdateListing(delete);
 		}
+		clearRecordData();
     }//GEN-LAST:event_deleteRecordHandler
 
     private void searchBoxFocusGainedHandler(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_searchBoxFocusGainedHandler
@@ -183,15 +175,16 @@ public class DirectoryPage extends javax.swing.JFrame {
     }//GEN-LAST:event_searchBoxFocusGainedHandler
 
     private void searchBoxKeyTypedHandler(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_searchBoxKeyTypedHandler
-
+		/*
 		char pressed = evt.getKeyChar();
 		if (pressed == '\b' || pressed == (char) 127) {
-			displayList = searchRecords(records, searchBox.getText());
+			displayList = searchRecords(recordListings, searchBox.getText());
 		} else {
 			displayList = searchRecords(displayList, searchBox.getText());
 		}
-		updateRecordDisplay();
-
+		recordItemList.removeAll();
+		updateListingDisplay();
+		*/
     }//GEN-LAST:event_searchBoxKeyTypedHandler
 
     private void searchBoxFocusLostHandler(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_searchBoxFocusLostHandler
@@ -201,27 +194,41 @@ public class DirectoryPage extends javax.swing.JFrame {
 
     private void listingSelected(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_listingSelected
 		if (recordItemList.getSelectedValue() != null) {
-			selectedRecord = databaseWrapper.getRecord(((Listing) recordItemList.getSelectedValue()).getID());
-			loadRecordData();
-		} else {
-			selectedRecord = null;
-			clearRecordData();
+			Listing newSelection = (Listing) recordItemList.getSelectedValue();
+			if (selectedRecord == null || selectedRecord.getID() != newSelection.getID()) {
+				saveCurrentRecord();
+				updateRecordData();
+			}
 		}
     }//GEN-LAST:event_listingSelected
 
-	public void loadRecordData() {
-		tabs = getTabs();
-		addTabs(tabs);
+	public void saveCurrentRecord() {
+		if (selectedRecord != null) {
+			databaseWrapper.saveRecord(selectedRecord);
+			updateListings();
+		}
+	}
+
+	public void updateListings(){
+		recordListings.remove(selectedRecord.createListing());
+		recordListings.add(selectedRecord.createListing());
+		sortAndDisplayListings();
+	}
+
+	public void updateRecordData() {
+		clearRecordData();
+		selectedRecord = databaseWrapper.getRecord(((Listing) recordItemList.getSelectedValue()).getID());
+		selectedRecord.draw(recordData);
 	}
 
 	public void clearRecordData() {
 		recordData.removeAll();
-		recordData.revalidate();
+		recordData.validate();
 	}
 
 	public void removeAndUpdateListing(Listing r) {
-		records.remove(r);
-		sortAndDisplayRecordNames();
+		recordListings.remove(r);
+		sortAndDisplayListings();
 	}
 
 	public void newRecord() {
@@ -232,130 +239,24 @@ public class DirectoryPage extends javax.swing.JFrame {
 	}
 
 	public void addAndDisplayListing(Listing r) {
-		records.add(r);
-		sortAndDisplayRecordNames();
+		recordListings.add(r);
+		sortAndDisplayListings();
 	}
 
-	public void loadSortAndDisplayRecordNames() {
-		records = databaseWrapper.getRecordListingsAsVector();
-		sortAndDisplayRecordNames();
+	public void loadSortAndDisplayListings() {
+		recordListings = databaseWrapper.getRecordListingsAsVector();
+		sortAndDisplayListings();
 	}
 
-	public void sortAndDisplayRecordNames() {
-		SortRecordsAlphabeticlyQuickSort();
-		displayList = (Vector<Listing>) records.clone();
-		recordItemList.setListData((Vector<Listing>) displayList.clone());
-		updateRecordDisplay();
+	public void sortAndDisplayListings() {
+		displayList = (Vector<Listing>) recordListings.clone();
+		SortRecordsAlphabeticlyQuickSort(displayList);
+		recordItemList.setListData(displayList);
+		//updateListingDisplay();
 	}
-
-	public void updateRecordDisplay() {
-		recordItemList.revalidate();  //TODO: find out which of the following lines are necessary
-		recordScrollPane.revalidate();
-		recordScrollPane.repaint();
-	}
-
-	public void selectListing(Listing l) {
-		recordItemList.setSelectedValue(l, true);
-	}
-
-	public void addTabs(ArrayList<JComponent> tabs) {
-		JComponent tab;
-		for (int i = 0; i < tabs.size(); i++) {
-			addTab(tabs.get(i));
-		}
-	}
-
-	public void addTab(JComponent tab) {
-		recordData.addTab(tab.getName(), tab);
-	}
-
-	public ArrayList<JComponent> getTabs() {
-		ArrayList<JComponent> tabList = new ArrayList<>();
-		ArrayList<String> bookTabNames = new ArrayList<>();
-		JScrollPane scrollPane = new JScrollPane();
-		scrollPane.setName("Contact");
-		JPanel contactPane = new JPanel();
-		contactPane.setName("Contact");
-		contactPane.setLayout(new FlowLayout());
-		for (int i = 0; i < Record.getFieldListSize(); i++) {
-			JLabel label = new JLabel();
-			label.setText(Record.getMasterField(i).getName());
-			contactPane.add(label);
-			JTextField text = new JTextField();
-			text.setName(Record.getMasterField(i).getName());
-			text.setSize(Record.getMasterField(i).getDisplayLength() * 5, 10);
-			contactPane.add(text);
-		}
-		scrollPane.add(contactPane);
-		tabList.add(scrollPane);
-		bookTabNames.addAll(Record.getBookGroups());
-		for (int i = 0; i < bookTabNames.size(); i++) {
-		JScrollPane scrollPane1 = new JScrollPane();
-		scrollPane.setName("Contact");
-		JPanel jPane = new JPanel();
-			jPane.setName(bookTabNames.get(i));
-			jPane.setLayout(new FlowLayout());
-			ArrayList<String> names = Record.getBookNamesByGroup(bookTabNames.get(i));
-			for (int j = 0; j < Record.getMasterBook(i).getNumberOfSections(); j++) {
-				Section s = Record.getMasterBook(i).getSection(j);
-				JCheckBox box = new JCheckBox();
-				box.setText(s.getName());
-				jPane.add(box);
-				JFormattedTextField date = new JFormattedTextField(new SimpleDateFormat("mm/dd/yyyy"));
-				date.setEditable(false);
-				if(s.getCompletionDate() != null){
-					date.setText(s.getCompletionDate().getMonth() + "//" + s.getCompletionDate().getDate() + "//" + s.getCompletionDate().getYear());
-				}
-				jPane.add(date);
-			}
-			scrollPane1.add(jPane);
-			tabList.add(scrollPane1);
-		}
-		return tabList;
-	}
-
-	/**
-	 * @param args the command line arguments
-	 */
-	public static void main(String args[]) {
-		/* Set the Nimbus look and feel */
-		//<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-		 * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html
-		 */
-		try {
-			for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-				if ("Nimbus".equals(info.getName())) {
-					javax.swing.UIManager.setLookAndFeel(info.getClassName());
-					break;
-				}
-			}
-		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException | javax.swing.UnsupportedLookAndFeelException ex) {
-			java.util.logging.Logger.getLogger(DirectoryPage.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-		}
-		//</editor-fold>
-
-		/* Create and display the form */
-		java.awt.EventQueue.invokeLater(new Runnable() {
-			public void run() {
-				new DirectoryPage().setVisible(true);
-			}
-		});
-	}
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton deleteRecord;
-    private javax.swing.JMenu fileMenu;
-    private javax.swing.JMenuBar menuBar;
-    private javax.swing.JButton newRecord;
-    private javax.swing.JTabbedPane recordData;
-    private javax.swing.JList recordItemList;
-    private javax.swing.JScrollPane recordScrollPane;
-    private javax.swing.JTextField searchBox;
-    // End of variables declaration//GEN-END:variables
-
-	private void SortRecordsAlphabeticlyQuickSort() {
-		if (!records.isEmpty()) {
-			quickSortAlphabeticly(records, 0, records.size() - 1);
+	private void SortRecordsAlphabeticlyQuickSort(Vector<Listing> list) {
+		if (!recordListings.isEmpty()) {
+			quickSortAlphabeticly(list, 0, list.size() - 1);
 		}
 	}
 
@@ -396,6 +297,55 @@ public class DirectoryPage extends javax.swing.JFrame {
 		return i;
 	}
 
+	public void updateListingDisplay() {
+		recordItemList.validate();  //TODO: find out which of the following lines are necessary
+		recordItemList.repaint();
+		recordScrollPane.validate();
+		recordScrollPane.repaint();
+	}
+
+	public void selectListing(Listing l) {
+		recordItemList.setSelectedValue(l, true);
+	}
+
+	/**
+	 * @param args the command line arguments
+	 */
+	public static void main(String args[]) {
+		/* Set the Nimbus look and feel */
+		//<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
+        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
+		 * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html
+		 */
+		try {
+			for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+				if ("Nimbus".equals(info.getName())) {
+					javax.swing.UIManager.setLookAndFeel(info.getClassName());
+					break;
+				}
+			}
+		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException | javax.swing.UnsupportedLookAndFeelException ex) {
+			java.util.logging.Logger.getLogger(DirectoryPage.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+		}
+		//</editor-fold>
+
+		/* Create and display the form */
+		DirectoryPage page;
+				page = new DirectoryPage();
+				page.setVisible(true);
+		Thread t = new Thread(page.s);
+		Runtime.getRuntime().addShutdownHook(t);
+	}
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton deleteRecord;
+    private javax.swing.JButton newRecord;
+    private javax.swing.JTabbedPane recordData;
+    private javax.swing.JList recordItemList;
+    private javax.swing.JScrollPane recordScrollPane;
+    private javax.swing.JTextField searchBox;
+    // End of variables declaration//GEN-END:variables
+
+
 	private ListModel getListItems() {
 		DefaultListModel list = new DefaultListModel();
 		return list;
@@ -413,7 +363,7 @@ public class DirectoryPage extends javax.swing.JFrame {
 		int counter = 0;
 		while (counter < searchSet.size()) {
 			Listing testee = searchSet.get(counter);
-			if (testee.getLastName().contains(text) || testee.getFirstName().contains(text)) {
+			if (testee.getFirstName() != null && testee.getLastName() != null && (testee.getLastName().contains(text) || testee.getFirstName().contains(text))) {
 				resultSet.add(testee);
 			}
 			counter++;
@@ -421,8 +371,8 @@ public class DirectoryPage extends javax.swing.JFrame {
 		return resultSet;
 	}
 	//TODO: put searching entries and loading data in seperate threads from application to eliminate temperary locking of application.
-
-	private void deleteRecord(Listing delete) {
-		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+	public void onClose(){
+		saveCurrentRecord();
+		databaseWrapper.closeDatabase();
 	}
 }
