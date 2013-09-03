@@ -1,8 +1,6 @@
 package awana.database;
 
 import java.awt.Color;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
 import java.util.Vector;
 import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
