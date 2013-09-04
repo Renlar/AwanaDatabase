@@ -1,7 +1,9 @@
 package awana.database;
 
 import java.awt.Dimension;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -47,6 +49,7 @@ public final class Record {
 		null, null, null, null, "CO",
 		null, null, null
 	};
+
 	private int ID;
 	private ArrayList<Field> fieldList;
 	private ArrayList<Book> books;
@@ -237,6 +240,12 @@ public final class Record {
 			pane.add(scrollPane.getName(), scrollPane);
 			scrollPane.validate();
 		}
+	}
+
+	static String calculateCompletionDate() {
+        SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy");
+        Date resultdate = new Date();
+		return sdf.format(resultdate);
 	}
 
 	@Override

@@ -125,7 +125,7 @@ public final class Book implements ItemListener {
 	public void setCompleted(boolean completed) {
 		this.completed = completed;
 		if (completed == true) {
-			completionDate = System.currentTimeMillis() + "";
+			completionDate = Record.calculateCompletionDate();
 			setAllSectionsCompleted();
 		} else {
 			completionDate = null;
