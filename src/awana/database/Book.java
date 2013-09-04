@@ -201,7 +201,7 @@ public final class Book implements ItemListener {
 			builder.append("` = '").append(s.isCompleted()).append("', `");
 			builder.append(bookPrefix).append(getGroup()).append("_").append(getName()).append("_").append(s.getName()).append(datePostfix).append("` = ");
 			if (s.isCompleted()) {
-				builder.append(s.getCompletionDate()).append(", ");
+				builder.append("'").append(s.getCompletionDate()).append("', ");
 			} else {
 				builder.append("null, ");
 			}
@@ -210,7 +210,7 @@ public final class Book implements ItemListener {
 		builder.append(isCompleted()).append("', `");
 		builder.append(bookPrefix).append(getGroup()).append("_").append(getName()).append(datePostfix).append("` = ");
 		if (isCompleted()) {
-			builder.append(getCompletionDate());
+			builder.append("'").append(getCompletionDate()).append("'");
 		} else {
 			builder.append("null");
 		}
