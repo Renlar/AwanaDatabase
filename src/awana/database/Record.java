@@ -12,40 +12,40 @@ import javax.swing.JTabbedPane;
  *
  * @author Renlar
  */
-public class Record {
+public final class Record {
 
 	private static ArrayList<Field> masterFieldList = new ArrayList<>();
 	private static ArrayList<Book> masterBookList = new ArrayList<>();
 	private static String[] fieldNameList = {
-		"First Name", "Last Name", "Birth Date", "Email", "Legal Guardian",
-		"Legal Guardian Phone", "Mother", "Mother Cell", "Father", "Father Cell",
+		"First Name", "Last Name", "Birth Date", "Email", "Mother",
+		"Mother Cell", "Father", "Father Cell", "Legal Guardian", "Legal Guardian Phone",
 		"Parent Email", "Address Line1", "Address Line2", "City", "State/Province",
-		"Zip", "Country", "County", "Emergency Contact", "Emergency Contact Phone"
+		"Zip", "Emergency Contact", "Emergency Contact Phone"
 	};
 	private static String[] fieldStorageType = {
 		"VARCHAR(100)", "VARCHAR(100)", "VARCHAR(100)", "VARCHAR(100)", "VARCHAR(100)",
 		"VARCHAR(100)", "VARCHAR(100)", "VARCHAR(100)", "VARCHAR(100)", "VARCHAR(100)",
 		"VARCHAR(100)", "VARCHAR(100)", "VARCHAR(100)", "VARCHAR(100)", "VARCHAR(100)",
-		"VARCHAR(100)", "VARCHAR(100)", "VARCHAR(100)", "VARCHAR(100)", "VARCHAR(100)"
+		"VARCHAR(100)", "VARCHAR(100)", "VARCHAR(100)"
 	};
 	private static String[] fieldDataType = {
 		"name", "name", "date", "email", "name",
 		"phone","name", "phone", "name", "phone",
-		"email", "string", "string", "string", "string5",
-		"int", "string10", "string10", "name", "phone"
+		"email", "string", "string", "string15", "string5",
+		"int", "name", "phone"
 	};
 	private static int[] fieldDisplayLength;
 	private static String[] fieldTypes = {
-		"default", "int", "string5", "string10", "string20", "string", "name", "email", "phone", "date"
+		"default", "int", "string5", "string10", "string15", "string20", "string", "name", "email", "phone", "date"
 	};
 	private static int[] fieldTypeDefaultDisplayLength = {
-		10, 8, 5, 10, 20, 30, 15, 20, 12, 10
+		10, 8, 5, 10, 15, 20, 30, 15, 20, 12, 10
 	};
 	private static String fieldDefaultValue[] = {
 		null, null, null, null, null,
 		null, null, null, null, null,
 		null, null, null, null, "CO",
-		null, null, null, null, null
+		null, null, null
 	};
 	private int ID;
 	private ArrayList<Field> fieldList;

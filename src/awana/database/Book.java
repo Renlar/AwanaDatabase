@@ -16,7 +16,7 @@ import javax.swing.JSeparator;
  *
  * @author Renlar
  */
-public class Book implements ItemListener {
+public final class Book implements ItemListener {
 
 	public static final String[] bookNames = {
 		"T&T_Ultimate Adventure 1", "T&T_Ultimate Adventure 2", "T&T_Ultimate Challenge 1", "T&T_Ultimate Challenge 2",
