@@ -4,7 +4,7 @@ package awana.database;
  *
  * @author Renlar
  */
-public class Listing {
+public final class Listing {
 
 	private int ID;
 	private String firstName;
@@ -17,8 +17,8 @@ public class Listing {
 	}
 
 	public void update(Record r){
-		this.firstName = r.getField(1).getData();
-		this.lastName = r.getField(2).getData();
+		this.firstName = r.getField(0).getData();
+		this.lastName = r.getField(1).getData();
 	}
 
 	public void update(String firstName, String LastName){
@@ -73,9 +73,6 @@ public class Listing {
 		}
 		a = a.toLowerCase();
 		b = b.toLowerCase();
-		if (a.compareTo(b) == 0) {
-			return 0;
-		}
 		for (int i = 0; i < a.length() && i < b.length(); i++) {
 			if (a.charAt(i) > b.charAt(i)) {
 				return 1;

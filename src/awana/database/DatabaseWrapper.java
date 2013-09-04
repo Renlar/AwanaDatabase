@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.DefaultListModel;
 import org.h2.jdbcx.JdbcDataSource;
 //TODO: rewrite wrapper using http://iciql.com/ to simplify database connections.
 
@@ -129,6 +130,25 @@ public class DatabaseWrapper {
 			Logger.getLogger(DatabaseWrapper.class.getName()).log(Level.SEVERE, null, ex);
 		}
 		return vector;
+	}
+	public DefaultListModel<Listing> getRecordListingsAsDefaultListModel() {
+		ResultSet resultSet;
+		DefaultListModel<Listing> listModel = new DefaultListModel<>();
+		Listing r;
+		try {
+			resultSet = executeQuery(select + "ID" + ", " + "`" + fieldPrefix + Record.getMasterField(0).getName()
+					+ "`" + ", " + "`" + fieldPrefix + Record.getMasterField(1).getName() + "`" + " " + from + dataTable + ";");
+
+			while (resultSet.next()) {
+				r = new Listing(resultSet.getInt("ID"),
+						resultSet.getNString(fieldPrefix + Record.getMasterField(0).getName()),
+						resultSet.getNString(fieldPrefix + Record.getMasterField(1).getName()));
+				listModel.addElement(r);
+			}
+		} catch (Exception ex) {
+			Logger.getLogger(DatabaseWrapper.class.getName()).log(Level.SEVERE, null, ex);
+		}
+		return listModel;
 	}
 
 	public void reconnectDatabase() {

@@ -5,27 +5,27 @@ import java.util.Vector;
 import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
 import javax.swing.ListModel;
+import javax.swing.event.ListDataEvent;
+import javax.swing.event.ListDataListener;
 
 /**
  *
  * @author Renlar
  */
-public class DirectoryPage extends javax.swing.JFrame{
+public class DirectoryPage extends javax.swing.JFrame implements ListDataListener {
 
-	private static Vector<Listing> recordListings;
 	private static DatabaseWrapper databaseWrapper;
-	private Vector<Listing> displayList;
 	private Record selectedRecord;
+	private DefaultListModel<Listing> listModel;
 	Shutdown s = new Shutdown(this);
 
 	/**
 	 * Creates new form DirectoryPage
 	 */
 	public DirectoryPage() {
-		initComponents();
 		Record.loadMasterData(); //do not remove temporary record load fix will be replaced with dynamic loading once variable yml field loading is supproted
 		databaseWrapper = new DatabaseWrapper();
-		loadSortAndDisplayListings();
+		initComponents();
 	}
 
 	/**
@@ -44,11 +44,12 @@ public class DirectoryPage extends javax.swing.JFrame{
         searchBox = new javax.swing.JTextField();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setTitle("Awana Database");
 
         recordScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         recordScrollPane.setName(""); // NOI18N
 
-        recordItemList.setModel(getListItems());
+        recordItemList.setModel(getListModel());
         recordItemList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         recordItemList.setName(""); // NOI18N
         recordItemList.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -162,7 +163,7 @@ public class DirectoryPage extends javax.swing.JFrame{
 				confirmDeleteOptions[1]);
 		if (choice == JOptionPane.YES_OPTION) {
 			databaseWrapper.deleteListing(delete);
-			removeAndUpdateListing(delete);
+			removeListing(delete);
 		}
 		clearRecordData();
     }//GEN-LAST:event_deleteRecordHandler
@@ -174,15 +175,14 @@ public class DirectoryPage extends javax.swing.JFrame{
 
     private void searchBoxKeyTypedHandler(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_searchBoxKeyTypedHandler
 		/*
-		char pressed = evt.getKeyChar();
-		if (pressed == '\b' || pressed == (char) 127) {
-			displayList = searchRecords(recordListings, searchBox.getText());
-		} else {
-			displayList = searchRecords(displayList, searchBox.getText());
-		}
-		recordItemList.removeAll();
-		updateListingDisplay();
-		*/
+		 char pressed = evt.getKeyChar();
+		 if (pressed == '\b' || pressed == (char) 127) {
+		 displayList = searchRecords(recordListings, searchBox.getText());
+		 } else {
+		 displayList = searchRecords(displayList, searchBox.getText());
+		 }
+		 recordItemList.removeAll();
+		 */
     }//GEN-LAST:event_searchBoxKeyTypedHandler
 
     private void searchBoxFocusLostHandler(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_searchBoxFocusLostHandler
@@ -207,10 +207,10 @@ public class DirectoryPage extends javax.swing.JFrame{
 		}
 	}
 
-	public void updateListings(){
-		recordListings.remove(selectedRecord.createListing());
-		recordListings.add(selectedRecord.createListing());
-		sortAndDisplayListings();
+	public void updateListings() {
+		int index = listModel.indexOf(selectedRecord.createListing());
+		listModel.remove(index);
+		addListing(selectedRecord.createListing());
 	}
 
 	public void updateRecordData() {
@@ -221,45 +221,61 @@ public class DirectoryPage extends javax.swing.JFrame{
 
 	public void clearRecordData() {
 		recordData.removeAll();
-		recordData.validate();
 	}
 
-	public void removeAndUpdateListing(Listing r) {
-		recordListings.remove(r);
-		sortAndDisplayListings();
+	public void removeListing(Listing r) {
+		listModel.removeElement(r);
 	}
 
 	public void newRecord() {
 		Record s = databaseWrapper.newRecord();
 		Listing l = s.createListing();
-		addAndDisplayListing(l);
+		addListing(l);
 		selectListing(l);
 	}
 
-	public void addAndDisplayListing(Listing r) {
-		recordListings.add(r);
-		sortAndDisplayListings();
+	public void addListing(Listing listing) {
+		listModel.insertElementAt(listing, getInsertLocation(listing));
 	}
 
-	public void loadSortAndDisplayListings() {
-		recordListings = databaseWrapper.getRecordListingsAsVector();
-		sortAndDisplayListings();
+	public int getInsertLocation(Listing listing) {
+		int loc = 0;
+		boolean notFound = true;
+		if (listModel.size() > 0) {
+			loc = listModel.size() / 2;
+			int increment = loc / 2;
+			while (notFound) {
+				int compair = listModel.get(loc).compairName(listing);
+				int compairBelow = -1;
+				if(loc > 0){
+					compairBelow = listModel.get(loc - 1).compairName(listing);
+				}
+				if (compair == 0) {
+					notFound = false;
+				}else if(compair == 1 && compairBelow == -1){
+					notFound = false;
+				}else if(compair == 1){
+					loc -= increment;
+				}else if(compair == -1){
+					loc += increment;
+				}
+				increment /= 2;
+				if(increment == 0){
+					increment++;
+				}
+			}
+		}
+		return loc;
 	}
 
-	public void sortAndDisplayListings() {
-		displayList = (Vector<Listing>) recordListings.clone();
-		SortRecordsAlphabeticlyQuickSort(displayList);
-		recordItemList.setListData(displayList);
-		//updateListingDisplay();
-	}
-	private void SortRecordsAlphabeticlyQuickSort(Vector<Listing> list) {
-		if (!recordListings.isEmpty()) {
+	private void SortRecordsAlphabeticlyQuickSort(DefaultListModel<Listing> list) {
+		if (!list.isEmpty()) {
 			quickSortAlphabeticly(list, 0, list.size() - 1);
 		}
 	}
 
-	private void quickSortAlphabeticly(Vector<Listing> list, int left, int right) {
-		int index = partition(list, left, right);
+	private void quickSortAlphabeticly(DefaultListModel<Listing> list, int left, int right) {
+		int index = quickSortPartition(list, left, right);
 		if (left < index - 1) {
 			quickSortAlphabeticly(list, left, index - 1);
 		}
@@ -268,7 +284,7 @@ public class DirectoryPage extends javax.swing.JFrame{
 		}
 	}
 
-	private int partition(Vector<Listing> list, int left, int right) {
+	private int quickSortPartition(DefaultListModel<Listing> list, int left, int right) {
 		int i = left, j = right;
 		Listing tmp1, tmp2;
 		Listing pivot = list.get((left + right) / 2);
@@ -295,13 +311,6 @@ public class DirectoryPage extends javax.swing.JFrame{
 		return i;
 	}
 
-	public void updateListingDisplay() {
-		recordItemList.validate();  //TODO: find out which of the following lines are necessary
-		recordItemList.repaint();
-		recordScrollPane.validate();
-		recordScrollPane.repaint();
-	}
-
 	public void selectListing(Listing l) {
 		recordItemList.setSelectedValue(l, true);
 	}
@@ -314,10 +323,11 @@ public class DirectoryPage extends javax.swing.JFrame{
     private javax.swing.JTextField searchBox;
     // End of variables declaration//GEN-END:variables
 
-
-	private ListModel getListItems() {
-		DefaultListModel list = new DefaultListModel();
-		return list;
+	private ListModel getListModel() {
+		listModel = databaseWrapper.getRecordListingsAsDefaultListModel();
+		listModel.addListDataListener(this);
+		SortRecordsAlphabeticlyQuickSort(listModel);
+		return listModel;
 	}
 
 	private Listing getSelectedListing() {
@@ -340,8 +350,24 @@ public class DirectoryPage extends javax.swing.JFrame{
 		return resultSet;
 	}
 	//TODO: put searching entries and loading data in seperate threads from application to eliminate temperary locking of application.
-	public void onClose(){
+
+	public void onClose() {
 		saveCurrentRecord();
 		databaseWrapper.closeDatabase();
+	}
+
+	@Override
+	public void intervalAdded(ListDataEvent e) {
+		//do-Nothing
+	}
+
+	@Override
+	public void intervalRemoved(ListDataEvent e) {
+		//do-Nothing
+	}
+
+	@Override
+	public void contentsChanged(ListDataEvent e) {
+		//do-Nothing
 	}
 }
