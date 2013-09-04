@@ -235,19 +235,29 @@ public class DirectoryPage extends javax.swing.JFrame implements ListDataListene
 	}
 
 	public void addListing(Listing listing) {
-		listModel.insertElementAt(listing, getInsertLocation(listing));
+		int insertLocation = getInsertLocation(listing);
+		/*if(insertLocation == listModel.size()){
+			listModel.
+		}*/
+		listModel.insertElementAt(listing, insertLocation);
 	}
 
 	public int getInsertLocation(Listing listing) {
 		int loc = 0;
 		boolean notFound = true;
 		if (listModel.size() > 0) {
-			loc = listModel.size() / 2;
-			int increment = loc / 2;
+			loc = (listModel.size() - 1) / 2;
+			int increment = loc;
 			while (notFound) {
+				increment /= 2;
+				if(increment == 0){
+					increment++;
+				}
+
 				int compair = listModel.get(loc).compairName(listing);
 				int compairBelow = -1;
-				if(loc > 0){
+
+				if(loc > 0 && loc < listModel.size()){
 					compairBelow = listModel.get(loc - 1).compairName(listing);
 				}
 				if (compair == 0) {
@@ -259,9 +269,8 @@ public class DirectoryPage extends javax.swing.JFrame implements ListDataListene
 				}else if(compair == -1){
 					loc += increment;
 				}
-				increment /= 2;
-				if(increment == 0){
-					increment++;
+				if(loc == listModel.size()){
+					notFound = false;
 				}
 			}
 		}
