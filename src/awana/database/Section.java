@@ -28,7 +28,7 @@ public class Section implements ItemListener{
 	public void setCompleted(boolean completed) {
 		this.completed = completed;
 		if (completed == true) {
-			completionDate = System.currentTimeMillis() + "";
+			completionDate = Record.calculateCompletionDate();
 		} else {
 			completionDate = null;
 		}
