@@ -35,7 +35,7 @@ public final class Book implements ItemListener {
 		//4
 		{"Discovery 1", "Discovery 2", "Discovery 3", "Discovery 4", "Discovery 5", "Discovery 6", "Discovery 7", "Discovery 8"},
 		//5
-		{""},
+		{},
 		//6
 		{"Lesson 1", "Lesson 2", "Lesson 3", "Lesson 4", "Lesson 5", "Lesson 6", "Oasis 1",
 			"Lesson 7", "Lesson 8", "Lesson 9", "Lesson 10", "Lesson 11", "Lesson 12", "Oasis 2"},
@@ -46,7 +46,7 @@ public final class Book implements ItemListener {
 		{"Lesson 1", "Lesson 2", "Lesson 3", "Lesson 4", "Lesson 5", "Lesson 6", "Oasis 1",
 			"Lesson 7", "Lesson 8", "Lesson 9", "Lesson 10", "Lesson 11", "Lesson 12", "Oasis 2"},
 		//9
-		{""},
+		{},
 		//10
 		{"Lesson 1", "Lesson 2", "Lesson 3", "Lesson 4", "Lesson 5", "Lesson 6", "Review 1-6",
 			"Lesson 7", "Lesson 8", "Lesson 9", "Lesson 10", "Lesson 11", "Lesson 12", "Review 7-12"},
@@ -170,7 +170,7 @@ public final class Book implements ItemListener {
 		checkBox.addItemListener(this);
 		panel.add(checkBox);
 		panel.add(new JSeparator());
-		if (getNumberOfSections() > 1) {
+		if (getNumberOfSections() > 0) {
 			for (int j = 0; j < getNumberOfSections(); j++) {
 				panel.add(getSection(j).getRenderable());
 			}
