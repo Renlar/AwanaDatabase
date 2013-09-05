@@ -32,7 +32,9 @@ public class Section implements ItemListener{
 		} else {
 			completionDate = null;
 		}
+		if(checkBox != null){
 		checkBox.setSelected(completed);
+		}
 	}
 
 	public boolean isCompleted() {
