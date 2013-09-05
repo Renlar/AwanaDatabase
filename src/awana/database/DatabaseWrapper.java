@@ -1,5 +1,6 @@
 package awana.database;
 
+import java.io.IOException;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Vector;
@@ -7,6 +8,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.DefaultListModel;
 import org.h2.jdbcx.JdbcDataSource;
+import java.nio.file.*;
 //TODO: rewrite wrapper using http://iciql.com/ to simplify database connections.
 
 /**
@@ -35,6 +37,8 @@ public class DatabaseWrapper {
 	public static final String completedPostfix = "_completed";
 	public static final String datePostfix = "_date";
 	public static final String bigInt = "BIGINT";
+	public static final String storagePath = "AWANA.Data/";
+	public static final String databaseName = "Directory";
 	private String dataTable = "DIRECTORY";
 	private Connection h2DatabaseConnection;
 
@@ -131,6 +135,7 @@ public class DatabaseWrapper {
 		}
 		return vector;
 	}
+
 	public DefaultListModel<Listing> getRecordListingsAsDefaultListModel() {
 		ResultSet resultSet;
 		DefaultListModel<Listing> listModel = new DefaultListModel<>();
@@ -160,7 +165,7 @@ public class DatabaseWrapper {
 
 	private void createDatabaseConnection() {
 		JdbcDataSource dataSource = new JdbcDataSource();
-		dataSource.setURL("jdbc:h2:Data/AWANA;DB_CLOSE_ON_EXIT=FALSE");
+		dataSource.setURL("jdbc:h2:" + storagePath + databaseName + ";DB_CLOSE_ON_EXIT=FALSE");
 		dataSource.setUser("sa");
 		dataSource.setPassword("sa");
 		connectToDatabase(dataSource);
