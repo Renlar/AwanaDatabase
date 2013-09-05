@@ -4,6 +4,8 @@ import java.awt.Dimension;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -19,22 +21,22 @@ public final class Record {
 	private static ArrayList<Field> masterFieldList = new ArrayList<>();
 	private static ArrayList<Book> masterBookList = new ArrayList<>();
 	private static String[] fieldNameList = {
-		"First Name", "Last Name", "Birth Date", "Email", "Mother",
-		"Mother Cell", "Father", "Father Cell", "Legal Guardian", "Legal Guardian Phone",
-		"Parent Email", "Address Line1", "Address Line2", "City", "State/Province",
-		"Zip", "Emergency Contact", "Emergency Contact Phone"
+		"First Name", "Last Name", "Birth Date", "Email", "Home Phone",
+		"Mother", "Mother Cell", "Father", "Father Cell", "Legal Guardian",
+		"Legal Guardian Phone", "Parent Email", "Address Line1", "Address Line2", "City",
+		"State/Province", "Zip", "Emergency Contact", "Emergency Contact Phone"
 	};
 	private static String[] fieldStorageType = {
 		"VARCHAR(100)", "VARCHAR(100)", "VARCHAR(100)", "VARCHAR(100)", "VARCHAR(100)",
 		"VARCHAR(100)", "VARCHAR(100)", "VARCHAR(100)", "VARCHAR(100)", "VARCHAR(100)",
 		"VARCHAR(100)", "VARCHAR(100)", "VARCHAR(100)", "VARCHAR(100)", "VARCHAR(100)",
-		"VARCHAR(100)", "VARCHAR(100)", "VARCHAR(100)"
+		"VARCHAR(100)", "VARCHAR(100)", "VARCHAR(100)", "VARCHAR(100)"
 	};
 	private static String[] fieldDataType = {
-		"name", "name", "date", "email", "name",
-		"phone","name", "phone", "name", "phone",
-		"email", "string", "string", "string15", "string5",
-		"int", "name", "phone"
+		"name", "name", "date", "email", "phone",
+		"name", "phone","name", "phone", "name",
+		"phone", "email", "string", "string", "string15",
+		"string5", "int", "name", "phone"
 	};
 	private static int[] fieldDisplayLength;
 	private static String[] fieldTypes = {
@@ -46,8 +48,8 @@ public final class Record {
 	private static String fieldDefaultValue[] = {
 		null, null, null, null, null,
 		null, null, null, null, null,
-		null, null, null, null, "CO",
-		null, null, null
+		null, null, null, null, null,
+		"CO", null, null, null
 	};
 
 	private int ID;
@@ -281,5 +283,18 @@ public final class Record {
 		}
 		b.append("\n");
 		return b.toString();
+	}
+
+
+	private static final String EMAIL_PATTERN =
+			"^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@"
+			+ "[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$";
+	private static Pattern pattern = Pattern.compile(EMAIL_PATTERN);
+	private Matcher matcher;
+
+	public boolean validateEmail(String emailAddress) {
+
+		matcher = pattern.matcher(emailAddress);
+		return matcher.matches();
 	}
 }
