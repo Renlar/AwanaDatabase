@@ -17,12 +17,14 @@ public class DirectoryPage extends javax.swing.JFrame implements ListDataListene
 	private static DatabaseWrapper databaseWrapper;
 	private Record selectedRecord;
 	private DefaultListModel<Listing> listModel;
-	Shutdown s = new Shutdown(this);
+	Shutdown shutdown;
+	public static int count = 0;
 
 	/**
 	 * Creates new form DirectoryPage
 	 */
 	public DirectoryPage() {
+		this.shutdown = new Shutdown(this);
 		Record.loadMasterData(); //do not remove temporary record load fix will be replaced with dynamic loading once variable yml field loading is supproted
 		databaseWrapper = new DatabaseWrapper();
 		initComponents();
@@ -288,6 +290,7 @@ public class DirectoryPage extends javax.swing.JFrame implements ListDataListene
 
 	private void quickSortAlphabeticly(DefaultListModel<Listing> list, int left, int right) {
 		int index = quickSortPartition(list, left, right);
+		count++;
 		if (left < index - 1) {
 			quickSortAlphabeticly(list, left, index - 1);
 		}
@@ -305,7 +308,7 @@ public class DirectoryPage extends javax.swing.JFrame implements ListDataListene
 			while (list.get(i).compairName(pivot) == -1) {
 				i++;
 			}
-			while (list.get(i).compairName(pivot) == 1) {
+			while (list.get(j).compairName(pivot) == 1) {
 				j--;
 			}
 			if (i <= j) {
