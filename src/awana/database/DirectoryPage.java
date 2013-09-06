@@ -176,12 +176,18 @@ public class DirectoryPage extends javax.swing.JFrame implements ListDataListene
 
     private void searchBoxFocusGainedHandler(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_searchBoxFocusGainedHandler
 		searchBox.setForeground(java.awt.Color.BLACK);
-		searchBox.setText("");
+
+		if (searchBox.getText().equals("Search")) {
+			searchBox.setText("");
+		}
     }//GEN-LAST:event_searchBoxFocusGainedHandler
 
     private void searchBoxFocusLostHandler(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_searchBoxFocusLostHandler
 		searchBox.setForeground(Color.GRAY);
-		searchBox.setText("Search");
+
+		if (searchBox.getText() == null || searchBox.getText().isEmpty()) {
+			searchBox.setText("Search");
+		}
     }//GEN-LAST:event_searchBoxFocusLostHandler
 
     private void listingSelected(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_listingSelected
@@ -197,9 +203,9 @@ public class DirectoryPage extends javax.swing.JFrame implements ListDataListene
     private void searchBoxKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_searchBoxKeyReleased
 		String s = searchBox.getText();
 		char pressed = evt.getKeyChar();
-		if(s.equalsIgnoreCase(null) || s.equalsIgnoreCase("")){
+		if (s.equalsIgnoreCase(null) || s.isEmpty()) {
 			searchListModel = masterListModel;
-		}else if (pressed == '\b' || pressed == (char) 127) {
+		} else if (pressed == '\b' || pressed == (char) 127) {
 			searchListModel = searchRecords(masterListModel, s);
 		} else {
 			searchListModel = searchRecords(searchListModel, s);
