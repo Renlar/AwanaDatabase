@@ -3,7 +3,6 @@ package awana.database;
 import java.io.IOException;
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.DefaultListModel;
@@ -114,26 +113,6 @@ public class DatabaseWrapper {
 			Logger.getLogger(DatabaseWrapper.class.getName()).log(Level.SEVERE, null, ex);
 			return null;
 		}
-	}
-
-	public Vector<Listing> getRecordListingsAsVector() {
-		ResultSet resultSet;
-		Vector<Listing> vector = new Vector<>();
-		Listing r;
-		try {
-			resultSet = executeQuery(select + "ID" + ", " + "`" + fieldPrefix + Record.getMasterField(0).getName()
-					+ "`" + ", " + "`" + fieldPrefix + Record.getMasterField(1).getName() + "`" + " " + from + dataTable + ";");
-
-			while (resultSet.next()) {
-				r = new Listing(resultSet.getInt("ID"),
-						resultSet.getNString(fieldPrefix + Record.getMasterField(0).getName()),
-						resultSet.getNString(fieldPrefix + Record.getMasterField(1).getName()));
-				vector.add(r);
-			}
-		} catch (Exception ex) {
-			Logger.getLogger(DatabaseWrapper.class.getName()).log(Level.SEVERE, null, ex);
-		}
-		return vector;
 	}
 
 	public DefaultListModel<Listing> getRecordListingsAsDefaultListModel() {
