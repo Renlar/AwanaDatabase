@@ -14,7 +14,7 @@ import javax.swing.JSeparator;
 
 /**
  *
- * @author Renlar
+ * @author Renlar <liddev.com>
  */
 public final class Book implements ItemListener {
 
