@@ -19,7 +19,7 @@ import java.util.logging.Logger;
  */
 public class AwanaDatabase {
 
-	private static int backupCutoff = 10;
+	private static int backupCutoff = 15;
 
 	/**
 	 * @param args the command line arguments
@@ -42,10 +42,9 @@ public class AwanaDatabase {
 			java.util.logging.Logger.getLogger(DirectoryPage.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
 		}
 		//</editor-fold>
-		backupDatabase();
 
-		DatabaseWrapper databaseWrapper = new DatabaseWrapper();
 		Record.loadMasterData(); //do not remove temporary record load fix will be replaced with dynamic loading once variable yml field loading is supproted
+		DatabaseWrapper databaseWrapper = new DatabaseWrapper();  //must call Record.loadMasterData() before creating a DatabaseWrapper
 
 		/* Create and display the form */
 		DirectoryPage page;
@@ -55,6 +54,7 @@ public class AwanaDatabase {
 		/*create the shutdown hook*/
 		Thread t = new Thread(new Shutdown(page, databaseWrapper));
 		Runtime.getRuntime().addShutdownHook(t);
+		backupDatabase();
 	}
 
 	private static void backupDatabase() {
