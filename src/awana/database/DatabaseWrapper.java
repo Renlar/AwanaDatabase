@@ -143,7 +143,8 @@ public class DatabaseWrapper {
 		try {
 			resultSet = executeQuery(select + "ID" + ", " + "`" + fieldPrefix + Record.getMasterField(0).getName()
 					+ "`" + ", " + "`" + fieldPrefix + Record.getMasterField(1).getName() + "`" + " " + from + dataTable + ";");
-
+			printResultSet(resultSet);
+			resultSet.beforeFirst();
 			while (resultSet.next()) {
 				r = new Listing(resultSet.getInt("ID"),
 						resultSet.getNString(fieldPrefix + Record.getMasterField(0).getName()),

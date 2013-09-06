@@ -36,7 +36,7 @@ public class AwanaDatabase {
 		DirectoryPage page;
 				page = new DirectoryPage();
 				page.setVisible(true);
-		Thread t = new Thread(page.s);
+		Thread t = new Thread(page.shutdown);
 		Runtime.getRuntime().addShutdownHook(t);
 	}
 }
