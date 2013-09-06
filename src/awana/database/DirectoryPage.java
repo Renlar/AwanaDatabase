@@ -209,8 +209,11 @@ public class DirectoryPage extends javax.swing.JFrame implements ListDataListene
 
 	public void updateListings() {
 		int index = listModel.indexOf(selectedRecord.createListing());
-		listModel.remove(index);
-		addListing(selectedRecord.createListing());
+		Listing l = listModel.get(index);
+		if (!(l.getFirstName().equals(selectedRecord.get("First Name")) && l.getLastName().equals(selectedRecord.get("Last Name")))) {
+			listModel.remove(index);
+			addListing(selectedRecord.createListing());
+		}
 	}
 
 	public void updateRecordData() {
@@ -237,8 +240,8 @@ public class DirectoryPage extends javax.swing.JFrame implements ListDataListene
 	public void addListing(Listing listing) {
 		int insertLocation = getInsertLocation(listing);
 		/*if(insertLocation == listModel.size()){
-			listModel.
-		}*/
+		 listModel.
+		 }*/
 		listModel.insertElementAt(listing, insertLocation);
 	}
 
@@ -250,26 +253,26 @@ public class DirectoryPage extends javax.swing.JFrame implements ListDataListene
 			int increment = loc;
 			while (notFound) {
 				increment /= 2;
-				if(increment == 0){
+				if (increment == 0) {
 					increment++;
 				}
 
 				int compair = listModel.get(loc).compairName(listing);
 				int compairBelow = -1;
 
-				if(loc > 0 && loc < listModel.size()){
+				if (loc > 0 && loc < listModel.size()) {
 					compairBelow = listModel.get(loc - 1).compairName(listing);
 				}
 				if (compair == 0) {
 					notFound = false;
-				}else if(compair == 1 && compairBelow == -1){
+				} else if (compair == 1 && compairBelow == -1) {
 					notFound = false;
-				}else if(compair == 1){
+				} else if (compair == 1) {
 					loc -= increment;
-				}else if(compair == -1){
+				} else if (compair == -1) {
 					loc += increment;
 				}
-				if(loc == listModel.size()){
+				if (loc == listModel.size()) {
 					notFound = false;
 				}
 			}
