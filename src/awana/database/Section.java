@@ -10,7 +10,7 @@ import javax.swing.JPanel;
 
 /**
  *
- * @author Renlar
+ * @author Renlar <liddev.com>
  */
 public class Section implements ItemListener{
 

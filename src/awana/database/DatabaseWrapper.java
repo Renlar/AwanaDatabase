@@ -1,21 +1,22 @@
 package awana.database;
 
-import java.io.IOException;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.DefaultListModel;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import org.h2.jdbcx.JdbcDataSource;
-import java.nio.file.*;
 //TODO: rewrite wrapper using http://iciql.com/ to simplify database connections.
 
 /**
  *
- * @author Renlar
+ * @author Renlar <liddev.com>
  */
 public class DatabaseWrapper {
 
+	public static final String databaseLocked = "Awana Database can not start because the database is locked.\nEither the program is already running, or it did not shutdown properly last time it was run.";
 	public static final String altar = "ALTAR";
 	public static final String create = "CREATE ";
 	public static final String delete = "DELETE ";
@@ -50,7 +51,7 @@ public class DatabaseWrapper {
 		try {
 			runStatement(delete + from + dataTable + " " + where + "ID = \'" + r.getID() + "\';");
 		} catch (Exception ex) {
-			Logger.getLogger(DatabaseWrapper.class.getName()).log(Level.SEVERE, null, ex);
+			Logger.getLogger("global").log(Level.SEVERE, null, ex);
 		}
 	}
 
@@ -58,7 +59,7 @@ public class DatabaseWrapper {
 		try {
 			runStatement(delete + from + dataTable + " " + where + "ID = '" + l.getID() + "';");
 		} catch (Exception ex) {
-			Logger.getLogger(DatabaseWrapper.class.getName()).log(Level.SEVERE, null, ex);
+			Logger.getLogger("global").log(Level.SEVERE, null, ex);
 		}
 	}
 
@@ -70,7 +71,7 @@ public class DatabaseWrapper {
 			result.first();
 			s = loadRecordData(result, ID);
 		} catch (Exception ex) {
-			Logger.getLogger(DatabaseWrapper.class.getName()).log(Level.SEVERE, null, ex);
+			Logger.getLogger("global").log(Level.SEVERE, null, ex);
 			return null;
 		}
 		return s;
@@ -98,7 +99,7 @@ public class DatabaseWrapper {
 		try {
 			runStatement(builder.toString());
 		} catch (Exception ex) {
-			Logger.getLogger(DatabaseWrapper.class.getName()).log(Level.SEVERE, null, ex);
+			Logger.getLogger("global").log(Level.SEVERE, null, ex);
 		}
 	}
 
@@ -110,7 +111,7 @@ public class DatabaseWrapper {
 			ID = runStatement(builder.toString());
 			return new Record(ID);
 		} catch (Exception ex) {
-			Logger.getLogger(DatabaseWrapper.class.getName()).log(Level.SEVERE, null, ex);
+			Logger.getLogger("global").log(Level.SEVERE, null, ex);
 			return null;
 		}
 	}
@@ -131,7 +132,7 @@ public class DatabaseWrapper {
 				listModel.addElement(r);
 			}
 		} catch (Exception ex) {
-			Logger.getLogger(DatabaseWrapper.class.getName()).log(Level.SEVERE, null, ex);
+			Logger.getLogger("global").log(Level.SEVERE, null, ex);
 		}
 		return listModel;
 	}
@@ -155,15 +156,19 @@ public class DatabaseWrapper {
 		try {
 			h2DatabaseConnection = ds.getConnection();
 		} catch (SQLException ex) {
-			Logger.getLogger(DatabaseWrapper.class.getName()).log(Level.SEVERE, null, ex);
+			Logger.getLogger("global").log(Level.SEVERE, null, ex);
+			JOptionPane.showMessageDialog(new JFrame(), databaseLocked,
+					"Database Locked",
+					JOptionPane.ERROR_MESSAGE);
+			System.exit(-2000);
 		}
 	}
 
 	public int runStatement(String sqlstmt) {
 		int ID = 0;
-		System.out.println(sqlstmt);
+
+		Logger.getLogger("global").log(Level.INFO, null, sqlstmt);
 		PreparedStatement stmt;
-		System.out.print("Status: ");
 		try {
 			stmt = h2DatabaseConnection.prepareStatement(sqlstmt, Statement.RETURN_GENERATED_KEYS);
 			stmt.executeUpdate();
@@ -172,26 +177,24 @@ public class DatabaseWrapper {
 				ID = keys.getInt(1);
 			}
 			stmt.close();
-			System.out.println("Success");
+		Logger.getLogger("global").log(Level.INFO, "Status: Success");
 			return ID;
 		} catch (SQLException ex) {
-			System.out.println("Failed");
-			//System.err.println("SQLException: " + ex.getMessage());
-			Logger.getLogger(DatabaseWrapper.class.getName()).log(Level.SEVERE, null, ex);
+		Logger.getLogger("global").log(Level.INFO, "Status: Failed");
+			Logger.getLogger("global").log(Level.SEVERE, null, ex);
 			return ID;
 		}
 	}
 
 	public ResultSet executeQuery(String sqlstmt) throws Exception {
-		System.out.println(sqlstmt);
-		System.out.print("Status: ");
+		Logger.getLogger("global").log(Level.INFO, sqlstmt);
 		try {
 			ResultSet result = queryDatabase(sqlstmt);
-			System.out.println("Success");
+		Logger.getLogger("global").log(Level.INFO, "Status: Success");
 			return result;
 		} catch (Exception ex) {
-			System.out.println("Failed");
-			Logger.getLogger(DatabaseWrapper.class.getName()).log(Level.SEVERE, null, ex);
+		Logger.getLogger("global").log(Level.INFO, "Status: Failed");
+			Logger.getLogger("global").log(Level.SEVERE, null, ex);
 			throw ex;
 		}
 	}
@@ -207,7 +210,7 @@ public class DatabaseWrapper {
 			printQueryResults(result);
 			result.first();
 		} catch (SQLException ex) {
-			Logger.getLogger(DatabaseWrapper.class.getName()).log(Level.SEVERE, null, ex);
+			Logger.getLogger("global").log(Level.SEVERE, null, ex);
 		}
 	}
 
@@ -234,7 +237,7 @@ public class DatabaseWrapper {
 			h2DatabaseConnection.close();
 			h2DatabaseConnection = null;
 		} catch (SQLException ex) {
-			Logger.getLogger(DatabaseWrapper.class.getName()).log(Level.SEVERE, null, ex);
+			Logger.getLogger("global").log(Level.SEVERE, null, ex);
 		}
 	}
 
@@ -344,7 +347,7 @@ public class DatabaseWrapper {
 				return true;
 			}
 		} catch (Exception ex) {
-			Logger.getLogger(DatabaseWrapper.class.getName()).log(Level.SEVERE, null, ex);
+			Logger.getLogger("global").log(Level.SEVERE, null, ex);
 		}
 		return false;
 	}
@@ -355,7 +358,7 @@ public class DatabaseWrapper {
 			ResultSet r = h2DatabaseConnection.getMetaData().getColumns(null, null, dataTable, null);
 			return r;
 		} catch (Exception ex) {
-			Logger.getLogger(DatabaseWrapper.class.getName()).log(Level.SEVERE, null, ex);
+			Logger.getLogger("global").log(Level.SEVERE, null, ex);
 			return null;
 		}
 	}
@@ -371,7 +374,7 @@ public class DatabaseWrapper {
 			s = results.getString(13);
 			return s;
 		} catch (SQLException ex) {
-			Logger.getLogger(DatabaseWrapper.class.getName()).log(Level.SEVERE, null, ex);
+			Logger.getLogger("global").log(Level.SEVERE, null, ex);
 			return null;
 		}
 	}
@@ -387,7 +390,7 @@ public class DatabaseWrapper {
 					return containsInRow;
 				}
 			} catch (SQLException ex) {
-				Logger.getLogger(DatabaseWrapper.class.getName()).log(Level.SEVERE, null, ex);
+				Logger.getLogger("global").log(Level.SEVERE, null, ex);
 			}
 		}
 		return -1;
@@ -404,7 +407,7 @@ public class DatabaseWrapper {
 					return containsInRow;
 				}
 			} catch (SQLException ex) {
-				Logger.getLogger(DatabaseWrapper.class.getName()).log(Level.SEVERE, null, ex);
+				Logger.getLogger("global").log(Level.SEVERE, null, ex);
 			}
 		}
 		return -1;
@@ -421,7 +424,7 @@ public class DatabaseWrapper {
 				}
 			}
 		} catch (SQLException ex) {
-			Logger.getLogger(DatabaseWrapper.class.getName()).log(Level.SEVERE, null, ex);
+			Logger.getLogger("global").log(Level.SEVERE, null, ex);
 		}
 		return contains;
 	}
@@ -440,7 +443,7 @@ public class DatabaseWrapper {
 			}
 			result.first();
 		} catch (SQLException ex) {
-			Logger.getLogger(DatabaseWrapper.class.getName()).log(Level.SEVERE, null, ex);
+			Logger.getLogger("global").log(Level.SEVERE, null, ex);
 			return null;
 		}
 		s.setFieldList(fields);
@@ -465,7 +468,7 @@ public class DatabaseWrapper {
 					section = new Section(Book.bookSections[i][j], isCompleted, date);
 					sections.add(section);
 				} catch (SQLException ex) {
-					Logger.getLogger(DatabaseWrapper.class.getName()).log(Level.SEVERE, null, ex);
+					Logger.getLogger("global").log(Level.SEVERE, null, ex);
 					return null;
 				}
 			}
@@ -473,7 +476,7 @@ public class DatabaseWrapper {
 				isCompleted = result.getBoolean(bookPrefix + Book.bookNames[i] + completedPostfix);
 				date = result.getString(bookPrefix + Book.bookNames[i] + datePostfix);
 			} catch (SQLException ex) {
-				Logger.getLogger(DatabaseWrapper.class.getName()).log(Level.SEVERE, null, ex);
+				Logger.getLogger("global").log(Level.SEVERE, null, ex);
 				return null;
 			}
 			book = new Book(Book.bookNames[i], sections, isCompleted, date);

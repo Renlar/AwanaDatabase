@@ -2,18 +2,21 @@ package awana.database;
 
 /**
  *
- * @author Justin VanDeBrake
+ * @author Renlar <liddev.com>
  */
 public class Shutdown implements Runnable{
 	private DirectoryPage page;
+	private DatabaseWrapper databaseWrapper;
 
-	Shutdown(DirectoryPage page) {
+	Shutdown(DirectoryPage page, DatabaseWrapper databaseWrapper) {
 		this.page = page;
+		this.databaseWrapper = databaseWrapper;
 	}
 
 	@Override
 	public void run() {
-		page.onClose();
+		page.saveCurrentRecord();
+		databaseWrapper.closeDatabase();
 	}
 
 }
