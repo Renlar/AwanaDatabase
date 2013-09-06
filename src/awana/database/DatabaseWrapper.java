@@ -343,9 +343,7 @@ public class DatabaseWrapper {
 		ResultSet s;
 		try {
 			s = executeQuery("select * from information_schema.tables where table_name = '" + dataTable + "'");
-			if (s.first()) {
-				return true;
-			}
+			return s.first();
 		} catch (Exception ex) {
 			Logger.getLogger("global").log(Level.SEVERE, null, ex);
 		}
