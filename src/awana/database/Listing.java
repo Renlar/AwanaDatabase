@@ -2,7 +2,7 @@ package awana.database;
 
 /**
  *
- * @author Renlar
+ * @author Renlar <liddev.com>
  */
 public final class Listing {
 

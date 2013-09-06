@@ -12,7 +12,7 @@ import javax.swing.text.BadLocationException;
 
 /**
  *
- * @author Justin VanDeBrake
+ * @author Renlar <liddev.com>
  */
 public class Field implements DocumentListener{
 	private String name;

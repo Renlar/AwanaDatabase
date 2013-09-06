@@ -9,7 +9,7 @@ import javax.swing.event.ListDataListener;
 
 /**
  *
- * @author Renlar
+ * @author Renlar <liddev.com>
  */
 public class DirectoryPage extends javax.swing.JFrame implements ListDataListener {
 
@@ -17,7 +17,6 @@ public class DirectoryPage extends javax.swing.JFrame implements ListDataListene
 	private Record selectedRecord;
 	private DefaultListModel<Listing> masterListModel;
 	private DefaultListModel<Listing> searchListModel;
-	protected Shutdown shutdown;
 
 	/**
 	 * Creates new form DirectoryPage
@@ -25,7 +24,6 @@ public class DirectoryPage extends javax.swing.JFrame implements ListDataListene
 	 * @param databaseWrapper the connection to the database;
 	 */
 	public DirectoryPage(DatabaseWrapper databaseWrapper) {
-		this.shutdown = new Shutdown(this);
 		this.databaseWrapper = databaseWrapper;
 		initComponents();
 		searchListModel = masterListModel;
@@ -373,11 +371,6 @@ public class DirectoryPage extends javax.swing.JFrame implements ListDataListene
 		return resultSet;
 	}
 	//TODO: put searching entries and loading data in seperate threads from application to eliminate temperary locking of application.
-
-	public void onClose() {
-		saveCurrentRecord();
-		databaseWrapper.closeDatabase();
-	}
 
 	@Override
 	public void intervalAdded(ListDataEvent e) {

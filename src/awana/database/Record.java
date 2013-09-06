@@ -14,7 +14,7 @@ import javax.swing.JTabbedPane;
 
 /**
  *
- * @author Renlar
+ * @author Renlar <liddev.com>
  */
 public final class Record {
 
