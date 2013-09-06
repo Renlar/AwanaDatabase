@@ -31,14 +31,19 @@ public class AwanaDatabase {
 			java.util.logging.Logger.getLogger(DirectoryPage.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
 		}
 		//</editor-fold>
+		backupDatabase();
 
+		DatabaseWrapper w = new DatabaseWrapper();
 		Record.loadMasterData(); //do not remove temporary record load fix will be replaced with dynamic loading once variable yml field loading is supproted
 
 		/* Create and display the form */
 		DirectoryPage page;
-				page = new DirectoryPage();
+				page = new DirectoryPage(w);
 				page.setVisible(true);
 		Thread t = new Thread(page.shutdown);
 		Runtime.getRuntime().addShutdownHook(t);
+	}
+
+	private static void backupDatabase() {
 	}
 }

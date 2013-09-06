@@ -13,7 +13,7 @@ import javax.swing.event.ListDataListener;
  */
 public class DirectoryPage extends javax.swing.JFrame implements ListDataListener {
 
-	private static DatabaseWrapper databaseWrapper;
+	private DatabaseWrapper databaseWrapper;
 	private Record selectedRecord;
 	private DefaultListModel<Listing> masterListModel;
 	private DefaultListModel<Listing> searchListModel;
@@ -21,10 +21,12 @@ public class DirectoryPage extends javax.swing.JFrame implements ListDataListene
 
 	/**
 	 * Creates new form DirectoryPage
+	 *
+	 * @param databaseWrapper the connection to the database;
 	 */
-	public DirectoryPage() {
+	public DirectoryPage(DatabaseWrapper databaseWrapper) {
 		this.shutdown = new Shutdown(this);
-		databaseWrapper = new DatabaseWrapper();
+		this.databaseWrapper = databaseWrapper;
 		initComponents();
 		searchListModel = masterListModel;
 	}
@@ -215,7 +217,7 @@ public class DirectoryPage extends javax.swing.JFrame implements ListDataListene
 	public void updateListings() {
 		int index = masterListModel.indexOf(selectedRecord.createListing());
 		Listing l = masterListModel.get(index);
-		if (!(l.getFirstName().equals(selectedRecord.get("First Name")) && l.getLastName().equals(selectedRecord.get("Last Name")))) {
+		if (l.getFirstName() != null && l.getLastName() != null && (!l.getFirstName().equals(selectedRecord.get("First Name").getData()) || !l.getLastName().equals(selectedRecord.get("Last Name").getData()))) {
 			masterListModel.remove(index);
 			addListing(selectedRecord.createListing());
 		}
@@ -244,10 +246,8 @@ public class DirectoryPage extends javax.swing.JFrame implements ListDataListene
 
 	public void addListing(Listing listing) {
 		int insertLocation = getInsertLocation(listing);
-		/*if(insertLocation == listModel.size()){
-		 listModel.
-		 }*/
 		masterListModel.insertElementAt(listing, insertLocation);
+		searchListModel = masterListModel;
 	}
 
 	public int getInsertLocation(Listing listing) {
