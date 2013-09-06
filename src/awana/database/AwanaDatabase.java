@@ -32,6 +32,8 @@ public class AwanaDatabase {
 		}
 		//</editor-fold>
 
+		Record.loadMasterData(); //do not remove temporary record load fix will be replaced with dynamic loading once variable yml field loading is supproted
+
 		/* Create and display the form */
 		DirectoryPage page;
 				page = new DirectoryPage();

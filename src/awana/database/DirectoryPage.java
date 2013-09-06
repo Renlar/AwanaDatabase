@@ -1,7 +1,6 @@
 package awana.database;
 
 import java.awt.Color;
-import java.util.Vector;
 import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
 import javax.swing.ListModel;
@@ -16,18 +15,18 @@ public class DirectoryPage extends javax.swing.JFrame implements ListDataListene
 
 	private static DatabaseWrapper databaseWrapper;
 	private Record selectedRecord;
-	private DefaultListModel<Listing> listModel;
-	Shutdown shutdown;
-	public static int count = 0;
+	private DefaultListModel<Listing> masterListModel;
+	private DefaultListModel<Listing> searchListModel;
+	protected Shutdown shutdown;
 
 	/**
 	 * Creates new form DirectoryPage
 	 */
 	public DirectoryPage() {
 		this.shutdown = new Shutdown(this);
-		Record.loadMasterData(); //do not remove temporary record load fix will be replaced with dynamic loading once variable yml field loading is supproted
 		databaseWrapper = new DatabaseWrapper();
 		initComponents();
+		searchListModel = masterListModel;
 	}
 
 	/**
@@ -93,8 +92,8 @@ public class DirectoryPage extends javax.swing.JFrame implements ListDataListene
             }
         });
         searchBox.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyTyped(java.awt.event.KeyEvent evt) {
-                searchBoxKeyTypedHandler(evt);
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                searchBoxKeyReleased(evt);
             }
         });
 
@@ -144,18 +143,21 @@ public class DirectoryPage extends javax.swing.JFrame implements ListDataListene
     }//GEN-LAST:event_newRecordHandler
 
     private void deleteRecordHandler(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_deleteRecordHandler
-		String msgNoRecordSelected = "No Record Selected.";
 		Listing delete = getSelectedListing();
+
+		String msgNoRecordSelected = "No Record Selected.";
+		String[] confirmDeleteOptions = {"Delete", "Cancel"};
+		String msgConfirmDelete = "<html>Are You sure you want to delete,</html>\n<html>"
+				+ delete.getFullNameLastFirst()
+				+ "</html>.\n<html><b>This can not be undone.</b></html>";
+
 		if (delete == null) {
 			JOptionPane.showMessageDialog(this, msgNoRecordSelected,
 					"Null",
 					JOptionPane.YES_NO_OPTION);
 			return;
 		}
-		String[] confirmDeleteOptions = {"Delete", "Cancel"};
-		String msgConfirmDelete = "<html>Are You sure you want to delete,</html>\n<html>"
-				+ delete.getFullNameLastFirst()
-				+ "</html>.\n<html><b>This can not be undone.</b></html>";
+
 		int choice = JOptionPane.showOptionDialog(this, msgConfirmDelete,
 				"Confirm Delete",
 				JOptionPane.YES_NO_OPTION,
@@ -175,18 +177,6 @@ public class DirectoryPage extends javax.swing.JFrame implements ListDataListene
 		searchBox.setText("");
     }//GEN-LAST:event_searchBoxFocusGainedHandler
 
-    private void searchBoxKeyTypedHandler(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_searchBoxKeyTypedHandler
-		/*
-		 char pressed = evt.getKeyChar();
-		 if (pressed == '\b' || pressed == (char) 127) {
-		 displayList = searchRecords(recordListings, searchBox.getText());
-		 } else {
-		 displayList = searchRecords(displayList, searchBox.getText());
-		 }
-		 recordItemList.removeAll();
-		 */
-    }//GEN-LAST:event_searchBoxKeyTypedHandler
-
     private void searchBoxFocusLostHandler(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_searchBoxFocusLostHandler
 		searchBox.setForeground(Color.GRAY);
 		searchBox.setText("Search");
@@ -202,6 +192,19 @@ public class DirectoryPage extends javax.swing.JFrame implements ListDataListene
 		}
     }//GEN-LAST:event_listingSelected
 
+    private void searchBoxKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_searchBoxKeyReleased
+		String s = searchBox.getText();
+		char pressed = evt.getKeyChar();
+		if(s.equalsIgnoreCase(null) || s.equalsIgnoreCase("")){
+			searchListModel = masterListModel;
+		}else if (pressed == '\b' || pressed == (char) 127) {
+			searchListModel = searchRecords(masterListModel, s);
+		} else {
+			searchListModel = searchRecords(searchListModel, s);
+		}
+		recordItemList.setModel(searchListModel);
+    }//GEN-LAST:event_searchBoxKeyReleased
+
 	public void saveCurrentRecord() {
 		if (selectedRecord != null) {
 			databaseWrapper.saveRecord(selectedRecord);
@@ -210,10 +213,10 @@ public class DirectoryPage extends javax.swing.JFrame implements ListDataListene
 	}
 
 	public void updateListings() {
-		int index = listModel.indexOf(selectedRecord.createListing());
-		Listing l = listModel.get(index);
+		int index = masterListModel.indexOf(selectedRecord.createListing());
+		Listing l = masterListModel.get(index);
 		if (!(l.getFirstName().equals(selectedRecord.get("First Name")) && l.getLastName().equals(selectedRecord.get("Last Name")))) {
-			listModel.remove(index);
+			masterListModel.remove(index);
 			addListing(selectedRecord.createListing());
 		}
 	}
@@ -229,7 +232,7 @@ public class DirectoryPage extends javax.swing.JFrame implements ListDataListene
 	}
 
 	public void removeListing(Listing r) {
-		listModel.removeElement(r);
+		masterListModel.removeElement(r);
 	}
 
 	public void newRecord() {
@@ -244,14 +247,14 @@ public class DirectoryPage extends javax.swing.JFrame implements ListDataListene
 		/*if(insertLocation == listModel.size()){
 		 listModel.
 		 }*/
-		listModel.insertElementAt(listing, insertLocation);
+		masterListModel.insertElementAt(listing, insertLocation);
 	}
 
 	public int getInsertLocation(Listing listing) {
 		int loc = 0;
 		boolean notFound = true;
-		if (listModel.size() > 0) {
-			loc = (listModel.size() - 1) / 2;
+		if (masterListModel.size() > 0) {
+			loc = (masterListModel.size() - 1) / 2;
 			int increment = loc;
 			while (notFound) {
 				increment /= 2;
@@ -259,11 +262,11 @@ public class DirectoryPage extends javax.swing.JFrame implements ListDataListene
 					increment++;
 				}
 
-				int compair = listModel.get(loc).compairName(listing);
+				int compair = masterListModel.get(loc).compairName(listing);
 				int compairBelow = -1;
 
-				if (loc > 0 && loc < listModel.size()) {
-					compairBelow = listModel.get(loc - 1).compairName(listing);
+				if (loc > 0 && loc < masterListModel.size()) {
+					compairBelow = masterListModel.get(loc - 1).compairName(listing);
 				}
 				if (compair == 0) {
 					notFound = false;
@@ -274,7 +277,7 @@ public class DirectoryPage extends javax.swing.JFrame implements ListDataListene
 				} else if (compair == -1) {
 					loc += increment;
 				}
-				if (loc == listModel.size()) {
+				if (loc == masterListModel.size()) {
 					notFound = false;
 				}
 			}
@@ -290,7 +293,6 @@ public class DirectoryPage extends javax.swing.JFrame implements ListDataListene
 
 	private void quickSortAlphabeticly(DefaultListModel<Listing> list, int left, int right) {
 		int index = quickSortPartition(list, left, right);
-		count++;
 		if (left < index - 1) {
 			quickSortAlphabeticly(list, left, index - 1);
 		}
@@ -339,18 +341,18 @@ public class DirectoryPage extends javax.swing.JFrame implements ListDataListene
     // End of variables declaration//GEN-END:variables
 
 	private ListModel getListModel() {
-		listModel = databaseWrapper.getRecordListingsAsDefaultListModel();
-		listModel.addListDataListener(this);
-		SortRecordsAlphabeticlyQuickSort(listModel);
-		return listModel;
+		masterListModel = databaseWrapper.getRecordListingsAsDefaultListModel();
+		masterListModel.addListDataListener(this);
+		SortRecordsAlphabeticlyQuickSort(masterListModel);
+		return masterListModel;
 	}
 
 	private Listing getSelectedListing() {
 		return (Listing) recordItemList.getSelectedValue();
 	}
 
-	private Vector<Listing> searchRecords(Vector<Listing> searchSet, String text) {
-		Vector<Listing> resultSet = new Vector<Listing>();
+	private DefaultListModel<Listing> searchRecords(DefaultListModel<Listing> searchSet, String text) {
+		DefaultListModel<Listing> resultSet = new DefaultListModel<Listing>();
 		if (searchSet.isEmpty()) {
 			return resultSet;
 		}
@@ -358,7 +360,7 @@ public class DirectoryPage extends javax.swing.JFrame implements ListDataListene
 		while (counter < searchSet.size()) {
 			Listing testee = searchSet.get(counter);
 			if (testee.getFirstName() != null && testee.getLastName() != null && (testee.getLastName().contains(text) || testee.getFirstName().contains(text))) {
-				resultSet.add(testee);
+				resultSet.addElement(testee);
 			}
 			counter++;
 		}
