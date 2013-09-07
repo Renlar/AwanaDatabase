@@ -220,10 +220,30 @@ public class DirectoryPage extends javax.swing.JFrame implements ListDataListene
 
 	public void updateListings() {
 		int index = masterListModel.indexOf(selectedRecord.createListing());
-		Listing l = masterListModel.get(index);
-		if (l.getFirstName() != null && l.getLastName() != null && (!l.getFirstName().equals(selectedRecord.get("First Name").getData()) || !l.getLastName().equals(selectedRecord.get("Last Name").getData()))) {
+		if(nameChanged()){
 			masterListModel.remove(index);
 			addListing(selectedRecord.createListing());
+		}
+	}
+
+	public boolean nameChanged(){
+		int index = masterListModel.indexOf(selectedRecord.createListing());
+		Listing l = masterListModel.get(index);
+		if(!stringsEqual(l.getFirstName(), selectedRecord.get("First Name").getData())){
+			return true;
+		}else if(!stringsEqual(l.getLastName(), selectedRecord.get("Last Name").getData())){
+			return true;
+		}
+		return false;
+	}
+
+	public boolean stringsEqual(String a, String b){
+		if(b == null && a == null){
+			return true;
+		}else if(b == null || a == null){
+			return false;
+		}else{
+			return a.equals(b);
 		}
 	}
 
