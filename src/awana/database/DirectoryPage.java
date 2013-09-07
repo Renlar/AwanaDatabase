@@ -234,6 +234,7 @@ public class DirectoryPage extends javax.swing.JFrame implements ListDataListene
 	}
 
 	public void clearRecordData() {
+		selectedRecord = null;
 		recordData.removeAll();
 	}
 
