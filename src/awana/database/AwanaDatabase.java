@@ -4,14 +4,8 @@
  */
 package awana.database;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.*;
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
-import java.util.logging.Logger;
 
 /**
  *
@@ -19,7 +13,6 @@ import java.util.logging.Logger;
  */
 public class AwanaDatabase {
 
-	private static int backupCutoff = 15;
 
 	/**
 	 * @param args the command line arguments
@@ -43,6 +36,17 @@ public class AwanaDatabase {
 		}
 		//</editor-fold>
 
+
+		/**Start the settings manager*/
+		Thread settings = new Thread(SettingsManager.getSettingsManager());
+		settings.setPriority(Thread.MAX_PRIORITY);
+		settings.start();
+
+		/**Start the backup system*/
+		Thread backup = new Thread(BackupSystem.getBackupSystem());
+		settings.setPriority(Thread.NORM_PRIORITY);
+		backup.start();
+
 		Record.loadMasterData(); //do not remove temporary record load fix will be replaced with dynamic loading once variable yml field loading is supproted
 		DatabaseWrapper databaseWrapper = new DatabaseWrapper();  //must call Record.loadMasterData() before creating a DatabaseWrapper
 
@@ -52,63 +56,7 @@ public class AwanaDatabase {
 		page.setVisible(true);
 
 		/*create the shutdown hook*/
-		Thread t = new Thread(new Shutdown(page, databaseWrapper));
-		Runtime.getRuntime().addShutdownHook(t);
-		backupDatabase();
-	}
-
-	private static void backupDatabase() {
-		renameAndTrimBackups();
-		File directory = new File(DatabaseWrapper.storagePath + "Backup/");
-		ArrayList<Path> paths = new ArrayList<>();
-		try {
-			DirectoryStream<Path> stream = Files.newDirectoryStream(FileSystems.getDefault().getPath(DatabaseWrapper.storagePath), "*.db");
-			for (Path p : stream) {
-				paths.add(p);
-				Logger.getGlobal().log(Level.INFO, null, p);
-			}
-			stream.close();
-
-			Files.copy(paths.get(0), FileSystems.getDefault().getPath(directory.getPath() + "/" + "Directory.h2.db.0.back"));
-
-		} catch (IOException ex) {
-			Logger.getGlobal().log(Level.SEVERE, null, ex);
-		}
-	}
-
-	private static void renameAndTrimBackups() {
-		File directory = new File(DatabaseWrapper.storagePath + "Backup/");
-		ArrayList<Path> paths = new ArrayList<>();
-		if (!directory.exists()) {
-			try {
-				Files.createDirectory(directory.toPath());
-			} catch (IOException ex) {
-				Logger.getLogger(AwanaDatabase.class.getName()).log(Level.SEVERE, null, ex);
-			}
-		} else {
-			try {
-				DirectoryStream<Path> stream = Files.newDirectoryStream(FileSystems.getDefault().getPath(DatabaseWrapper.storagePath + "Backup/"), "*.back");
-				for (Path p : stream) {
-					paths.add(p);
-					Logger.getGlobal().log(Level.INFO, p.toString());
-				}
-				stream.close();
-
-				if (!paths.isEmpty()) {
-					for (int i = paths.size(); i > 0; i--) {
-						File file = paths.get(i - 1).toFile();
-						System.out.println(file.getPath());
-						if (i >= backupCutoff) {
-							file.delete();
-						} else {
-							File FileR = FileSystems.getDefault().getPath(file.getPath().substring(0, file.getPath().lastIndexOf("db") + 3).concat(i + ".back")).toFile();
-							file.renameTo(FileR);
-						}
-					}
-				}
-			} catch (IOException ex) {
-				Logger.getGlobal().log(Level.SEVERE, null, ex);
-			}
-		}
+		Thread shutdown = new Thread(new ShutdownManager(page, databaseWrapper));
+		Runtime.getRuntime().addShutdownHook(shutdown);
 	}
 }
