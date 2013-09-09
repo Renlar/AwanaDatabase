@@ -4,6 +4,7 @@
  */
 package awana.database;
 
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 
@@ -13,7 +14,7 @@ import java.util.logging.LogManager;
  */
 public class AwanaDatabase {
 
-
+	private static ArrayList<Shutdown> threads = new ArrayList<>();
 	/**
 	 * @param args the command line arguments
 	 */
@@ -38,13 +39,17 @@ public class AwanaDatabase {
 
 
 		/**Start the settings manager*/
-		Thread settings = new Thread(SettingsManager.getSettingsManager());
+		SettingsManager sm = SettingsManager.get();
+		threads.add(sm);
+		Thread settings = new Thread(sm);
 		settings.setPriority(Thread.MAX_PRIORITY);
 		settings.start();
 
 		/**Start the backup system*/
-		Thread backup = new Thread(BackupSystem.getBackupSystem());
-		settings.setPriority(Thread.NORM_PRIORITY);
+		BackupSystem bs = BackupSystem.get();
+		threads.add(bs);
+		Thread backup = new Thread(bs);
+		backup.setPriority(Thread.NORM_PRIORITY);
 		backup.start();
 
 		Record.loadMasterData(); //do not remove temporary record load fix will be replaced with dynamic loading once variable yml field loading is supproted
@@ -54,6 +59,13 @@ public class AwanaDatabase {
 		DirectoryPage page;
 		page = new DirectoryPage(databaseWrapper);
 		page.setVisible(true);
+
+		/**Start the Data Manager*/
+		DataManager dm = DataManager.get();
+		threads.add(bs);
+		Thread data = new Thread(dm);
+		data.setPriority(Thread.NORM_PRIORITY);
+		data.start();
 
 		/*create the shutdown hook*/
 		Thread shutdown = new Thread(new ShutdownManager(page, databaseWrapper));

@@ -16,11 +16,11 @@ class SettingsManager implements Runnable, Shutdown {
 	}
 
 	@Override
-	public int onStop() {
+	public int stop() {
 		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
 	}
 
-	synchronized public static SettingsManager getSettingsManager(){
+	synchronized public static SettingsManager get(){
 		if(settingsManager == null){
 			settingsManager = new SettingsManager();
 		}

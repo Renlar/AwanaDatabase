@@ -82,11 +82,11 @@ public class BackupSystem implements Runnable, Shutdown {
 	}
 
 	@Override
-	public int onStop() {
+	public int stop() {
 		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
 	}
 
-	synchronized public static BackupSystem getBackupSystem(){
+	synchronized public static BackupSystem get(){
 		if(backupSystem == null){
 			backupSystem = new BackupSystem();
 		}

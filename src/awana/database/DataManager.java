@@ -17,11 +17,11 @@ public class DataManager implements Runnable, Shutdown {
 	}
 
 	@Override
-	public int onStop() {
+	public int stop() {
 		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
 	}
 
-	synchronized public static DataManager getDataManager(){
+	synchronized public static DataManager get(){
 		if(dataManager == null){
 			dataManager = new DataManager();
 		}
