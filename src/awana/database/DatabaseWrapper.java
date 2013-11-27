@@ -41,10 +41,19 @@ public class DatabaseWrapper {
 	public static final String databaseName = "Directory";
 	private String dataTable = "DIRECTORY";
 	private Connection h2DatabaseConnection;
+	private static DatabaseWrapper wrapper;
 
-	public DatabaseWrapper() {
+	private DatabaseWrapper() {
 		createDatabaseConnection();
 		updateDatabase();
+	}
+
+	public static synchronized DatabaseWrapper get(){
+		if(wrapper == null){
+			wrapper = new DatabaseWrapper();
+		}
+		return wrapper;
+
 	}
 
 	public void deleteRecord(Record r) {

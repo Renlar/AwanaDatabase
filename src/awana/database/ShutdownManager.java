@@ -15,8 +15,7 @@ public class ShutdownManager implements Runnable{
 
 	@Override
 	public void run() {
-		page.saveCurrentRecord();
-		databaseWrapper.closeDatabase();
+
 	}
 
 }

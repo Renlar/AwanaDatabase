@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package awana.database;
 
 import java.util.ArrayList;
@@ -49,16 +45,8 @@ public class AwanaDatabase {
 		BackupSystem bs = BackupSystem.get();
 		threads.add(bs);
 		Thread backup = new Thread(bs);
-		backup.setPriority(Thread.NORM_PRIORITY);
+		backup.setPriority(Thread.MIN_PRIORITY);
 		backup.start();
-
-		Record.loadMasterData(); //do not remove temporary record load fix will be replaced with dynamic loading once variable yml field loading is supproted
-		DatabaseWrapper databaseWrapper = new DatabaseWrapper();  //must call Record.loadMasterData() before creating a DatabaseWrapper
-
-		/* Create and display the form */
-		DirectoryPage page;
-		page = new DirectoryPage(databaseWrapper);
-		page.setVisible(true);
 
 		/**Start the Data Manager*/
 		DataManager dm = DataManager.get();
@@ -66,6 +54,14 @@ public class AwanaDatabase {
 		Thread data = new Thread(dm);
 		data.setPriority(Thread.NORM_PRIORITY);
 		data.start();
+
+		Record.loadMasterData(); //do not remove temporary record load fix will be replaced with dynamic loading once variable yml field loading is supproted
+		DatabaseWrapper databaseWrapper = DatabaseWrapper.get();  //must call Record.loadMasterData() before creating a DatabaseWrapper
+
+		/* Create and display the form */
+		DirectoryPage page;
+		page = DirectoryPage.get();
+		page.setVisible(true);
 
 		/*create the shutdown hook*/
 		Thread shutdown = new Thread(new ShutdownManager(page, databaseWrapper));

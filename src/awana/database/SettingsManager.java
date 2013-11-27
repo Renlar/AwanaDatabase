@@ -1,5 +1,8 @@
 package awana.database;
 
+import awana.database.Record;
+import awana.database.Shutdown;
+
 /**
  *
  * @author Renlar <liddev.com>
@@ -7,6 +10,7 @@ package awana.database;
 class SettingsManager implements Runnable, Shutdown {
 
 	private static SettingsManager settingsManager;
+
 	private SettingsManager() {
 	}
 
@@ -16,11 +20,11 @@ class SettingsManager implements Runnable, Shutdown {
 	}
 
 	@Override
-	public int stop() {
+	public void stop() {
 		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
 	}
 
-	synchronized public static SettingsManager get(){
+	public static synchronized SettingsManager get(){
 		if(settingsManager == null){
 			settingsManager = new SettingsManager();
 		}
