@@ -1,4 +1,4 @@
-package awana.database;
+package com.liddev.awanadatabase;
 
 import java.awt.Color;
 import javax.swing.DefaultListModel;

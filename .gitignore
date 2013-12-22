@@ -1,7 +1,6 @@
-/build/
-/dist/
 /AWANA.Data/
 /Releases/
-/lib/CopyLibs/
-/lib/nblibraries.properties
-/nbproject/private/
+/build/
+/dist/
+/lib/
+/target/
