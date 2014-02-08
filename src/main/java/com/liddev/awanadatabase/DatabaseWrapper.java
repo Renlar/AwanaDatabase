@@ -1,6 +1,11 @@
 package com.liddev.awanadatabase;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -17,7 +22,7 @@ import org.h2.jdbcx.JdbcDataSource;
 public class DatabaseWrapper {
 
 	public static final String databaseLocked = "Awana Database can not start because the database is locked.\nEither the program is already running, or it did not shutdown properly last time it was run.";
-	public static final String altar = "ALTAR";
+	public static final String alter = "ALTER";
 	public static final String create = "CREATE ";
 	public static final String delete = "DELETE ";
 	public static final String from = "FROM ";
@@ -39,7 +44,7 @@ public class DatabaseWrapper {
 	public static final String bigInt = "BIGINT";
 	public static final String storagePath = "AWANA.Data/";
 	public static final String databaseName = "Directory";
-	private String dataTable = "DIRECTORY";
+	public final String dataTable = "DIRECTORY";
 	private Connection h2DatabaseConnection;
 	private static DatabaseWrapper wrapper;
 
@@ -305,7 +310,7 @@ public class DatabaseWrapper {
 	}
 
 	private void addColumn(String columnName, String columnType, String defaultValue) {
-		String query = altar + table + "\"" + dataTable + "\" ADD " + columnName + " " + columnType + " DEFAULT \"" + defaultValue + "\";";
+		String query = alter + table + "\"" + dataTable + "\" ADD " + columnName + " " + columnType + " DEFAULT \"" + defaultValue + "\";";
 		runStatement(query);
 	}
 

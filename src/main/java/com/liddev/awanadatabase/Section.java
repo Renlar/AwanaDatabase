@@ -3,7 +3,6 @@ package com.liddev.awanadatabase;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import javax.swing.JCheckBox;
 import javax.swing.JFormattedTextField;
 import javax.swing.JPanel;
@@ -14,7 +13,7 @@ import javax.swing.JPanel;
  */
 public class Section implements ItemListener{
 
-	private String name;
+	private final String name;
 	private boolean completed;
 	private String completionDate;
 	private JCheckBox checkBox;
@@ -74,4 +73,24 @@ public class Section implements ItemListener{
 	public String toString(){
 		return "Name:" + getName() + "; Completed:" + isCompleted();
 	}
+        
+        /**
+         * 
+         * @param o the object to check for structural equivalence.
+         * @return true if objects the same or structurally equivalent.
+         */
+        @Override
+        public boolean equals(Object o){
+            if(o == null){
+                return false;
+            }else if(o.getClass().equals(this.getClass())){
+                Section s = (Section) o;
+                if(s.getName().equals(this.getName()) 
+                        && s.getCompletionDate().equals(this.getCompletionDate()) 
+                        && s.isCompleted() == this.isCompleted()){
+                    return true;
+                }
+            }
+            return false;
+        }
 }

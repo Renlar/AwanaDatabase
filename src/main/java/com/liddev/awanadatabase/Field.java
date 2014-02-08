@@ -15,11 +15,11 @@ import javax.swing.text.BadLocationException;
  * @author Renlar <liddev.com>
  */
 public class Field implements DocumentListener{
-	private String name;
+	private final String name;
 	private String data;
-	private String type;
+	private final String type;
 	private String storageType;
-	private int displayLength;
+	private final int displayLength;
 	private JTextField textField;
 
 	public Field(String name, String data, String type){
@@ -110,7 +110,26 @@ public class Field implements DocumentListener{
 		}
 	}
 
+        @Override
 	public String toString(){
 		return "Name:" + getName() + "; Data:" + getData() + "\n";
 	}
+        
+        @Override
+        public boolean equals(Object o){
+            if(o == null){
+                return false;
+            }
+            if(o.getClass().equals(this.getClass())){
+                Field f = (Field) o;
+                if(f.getName().equals(this.getName())
+                        && f.getData().equals(this.getData())
+                        && f.getDisplayLength() == this.getDisplayLength() 
+                        && f.getStorageType().equals(this.getStorageType()) 
+                        && f.getType().equals(this.getType())){
+                    return true;
+                }
+            }
+            return false;
+        }
 }

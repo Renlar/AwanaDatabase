@@ -55,7 +55,7 @@ public class AwanaDatabase {
 		data.setPriority(Thread.NORM_PRIORITY);
 		data.start();
 
-		Record.loadMasterData(); //do not remove temporary record load fix will be replaced with dynamic loading once variable yml field loading is supproted
+		Record.loadMasterData(); //do not remove, temporary record load fix, will be replaced with dynamic loading once variable yml field loading is supproted
 		DatabaseWrapper databaseWrapper = DatabaseWrapper.get();  //must call Record.loadMasterData() before creating a DatabaseWrapper
 
 		/* Create and display the form */
