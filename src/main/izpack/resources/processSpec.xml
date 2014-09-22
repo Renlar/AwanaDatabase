@@ -14,7 +14,7 @@
   <!-- ProcessPanel is not needed in Unix, but it's difficult to hide it.
        So print a message. rather than leaving a blank panel. -->
   <job name="Export path">
-    <os family="unix" />
+    <os family="unix"/>
     <executefile name="/bin/echo">
       <arg>All readings are nominal. System is ready.</arg>
     </executefile>

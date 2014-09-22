@@ -7,20 +7,24 @@ import org.junit.Test
 
 import static org.junit.Assert.fail
 
+/**
+ * @author Renlar <liddev.com>
+ */
 @TestFor(AwanaDatabaseController)
 class AwanaDatabaseControllerTest {
-    static {
-        // force initialization JavaFX Toolkit
-        new javafx.embed.swing.JFXPanel()
-    }
 
-    private AwanaDatabaseController controller
+  static {
+    // force initialization JavaFX Toolkit
+    new javafx.embed.swing.JFXPanel()
+  }
 
-    @Rule
-    public final GriffonUnitRule griffon = new GriffonUnitRule()
+  private AwanaDatabaseController controller
 
-    @Test
-    void testClickAction() {
-        fail('Not yet implemented!')
-    }
+  @Rule
+  public final GriffonUnitRule griffon = new GriffonUnitRule()
+
+  @Test
+  void testClickAction() {
+    fail('Not yet implemented!')
+  }
 }

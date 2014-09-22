@@ -5,7 +5,7 @@
     <variable name="appSubPath" value="@{app.subpath}"/>
     <variable name="appVersion" value="@{app.version}"/>
     <!-- pre-select desktop shortcut checkbox -->
-    <variable name="DesktopShortcutCheckboxEnabled" value="true" />
+    <variable name="DesktopShortcutCheckboxEnabled" value="true"/>
   </variables>
   <native type="izpack" name="ShellLink.dll"/>
   <native type="3rdparty" name="COIOSHelper.dll" stage="both">
@@ -36,7 +36,7 @@
     <modifier key="headingPanelCounter" value="text"/>
     <modifier key="headingPanelCounterPos" value="inHeading"/>
     <laf name="metouia">
-       <os family="unix" />
+      <os family="unix"/>
     </laf>
   </guiprefs>
 
@@ -57,19 +57,19 @@
   </locale>
 
   <resources>
-    <res id="Heading.image" src="resources/griffon-logo.png" />
-    <res id="griffon.logo" src="resources/griffon-logo.png" />
-    <res id="griffon.splash" src="resources/griffon-splash.png" />
-    <res id="HTMLLicencePanel.licence" src="resources/asl2.html" />
+    <res id="Heading.image" src="resources/griffon-logo.png"/>
+    <res id="griffon.logo" src="resources/griffon-logo.png"/>
+    <res id="griffon.splash" src="resources/griffon-splash.png"/>
+    <res id="HTMLLicencePanel.licence" src="resources/asl2.html"/>
 
     <!-- FIXME: parse=yes results in a blank panel -->
-    <res id="HTMLInfoPanel.info" src="resources/README.html" parse="no" />
-    <res id="TargetPanel.dir.unix" src="resources/target_unix.txt" parse="yes" />
-    <res id="Win_NT_shortcutSpec.xml" src="resources/winShortcutSpec.xml" />
+    <res id="HTMLInfoPanel.info" src="resources/README.html" parse="no"/>
+    <res id="TargetPanel.dir.unix" src="resources/target_unix.txt" parse="yes"/>
+    <res id="Win_NT_shortcutSpec.xml" src="resources/winShortcutSpec.xml"/>
     <res id="Unix_shortcutSpec.xml" src="resources/unixShortcutSpec.xml"/>
-    <res id="shortcutSpec.xml" src="resources/emptyShortcutSpec.xml" />
-    <res id="ProcessPanel.Spec.xml" src="resources/processSpec.xml" />
-    <res id="RegistrySpec.xml" src="resources/RegistrySpec.xml" />
+    <res id="shortcutSpec.xml" src="resources/emptyShortcutSpec.xml"/>
+    <res id="ProcessPanel.Spec.xml" src="resources/processSpec.xml"/>
+    <res id="RegistrySpec.xml" src="resources/RegistrySpec.xml"/>
   </resources>
 
   <native type="izpack" name="ShellLink.dll"/>
@@ -78,12 +78,12 @@
     <panel classname="HelloPanel"/>
     <panel classname="HTMLInfoPanel"/>
     <panel classname="HTMLLicencePanel"/>
-    <panel classname="TargetPanel" />
+    <panel classname="TargetPanel"/>
     <panel classname="PacksPanel"/>
     <panel classname="SummaryPanel"/>
     <panel classname="InstallPanel"/>
     <panel classname="ProcessPanel"/>
-    <panel classname="ShortcutPanel" />
+    <panel classname="ShortcutPanel"/>
     <panel classname="FinishPanel"/>
   </panels>
 
@@ -100,14 +100,14 @@
       <description>@{app.title} binary installation.</description>
 
       <fileset dir="binary"
-         targetdir="$INSTALL_PATH">
+               targetdir="$INSTALL_PATH">
       </fileset>
 
-      <file src="resources/pre-uninstall.bat" targetdir="$INSTALL_PATH/Uninstaller" os="windows" />
-      <parsable targetfile="$INSTALL_PATH/Uninstaller/pre-uninstall.bat" os="windows" />
-      <executable targetfile="$INSTALL_PATH/Uninstaller/pre-uninstall.bat" os="windows" stage="uninstall" />
-      <executable targetfile="$INSTALL_PATH/bin/@{app.binary}.bat" os="windows" />
-      <executable targetfile="$INSTALL_PATH/bin/@{app.binary}" os="unix" />
+      <file src="resources/pre-uninstall.bat" targetdir="$INSTALL_PATH/Uninstaller" os="windows"/>
+      <parsable targetfile="$INSTALL_PATH/Uninstaller/pre-uninstall.bat" os="windows"/>
+      <executable targetfile="$INSTALL_PATH/Uninstaller/pre-uninstall.bat" os="windows" stage="uninstall"/>
+      <executable targetfile="$INSTALL_PATH/bin/@{app.binary}.bat" os="windows"/>
+      <executable targetfile="$INSTALL_PATH/bin/@{app.binary}" os="unix"/>
     </pack>
   </packs>
 
