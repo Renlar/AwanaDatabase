@@ -21,6 +21,7 @@ public final class Book implements ItemListener {
 	public static final String[] bookNames = {
 		"T&T_Ultimate Adventure 1", "T&T_Ultimate Adventure 2", "T&T_Ultimate Challenge 1", "T&T_Ultimate Challenge 2",
 		"Trek_Treck Check", "Trek_Roadsign Series", "Trek_Dashboard Series", "Trek_Billboard Series",
+		"Trek_1 His Story", "Trek_Bible Reading",
 		"Journey_Faith Foundations", "Journey_Main Study 1", "Journey_Elective 1", "Journey_Main Study 2",
 		"Journey_Elective 2", "Journey_Main Study 3", "Journey_Elective 3", "Journey_Main Study 4","Journey_Elective 4",
 		"Journey_Bible Reading"
@@ -46,13 +47,16 @@ public final class Book implements ItemListener {
 		{"Lesson 1", "Lesson 2", "Lesson 3", "Lesson 4", "Lesson 5", "Lesson 6", "Oasis 1",
 			"Lesson 7", "Lesson 8", "Lesson 9", "Lesson 10", "Lesson 11", "Lesson 12", "Oasis 2"},
 		//9
-		{},
+		{"Lesson 1.1", "Lesson 1.2", "Lesson 1.3", "Lesson 1.4", "Lesson 1.5", "Lesson 1.6", "Lesson 1.7", "Lesson 1 Review", 
+				"Lesson 2.1", "Lesson 2.2", "Lesson 2.3", "Lesson 2.4", "Lesson 2.5", "Lesson 2.6", "Lesson 2.7", "Lesson 2 Review", 
+				"Lesson 3.1", "Lesson 3.2", "Lesson 3.3", "Lesson 3.4", "Lesson 3.5", "Lesson 3.6", "Lesson 3.7", "Lesson 3 Review", 
+				"Lesson 4.1", "Lesson 4.2", "Lesson 4.3", "Lesson 4.4", "Lesson 4.5", "Lesson 4.6", "Lesson 4.7", "Lesson 4 Review"},
 		//10
-		{"Lesson 1", "Lesson 2", "Lesson 3", "Lesson 4", "Lesson 5", "Lesson 6", "Review 1-6",
-			"Lesson 7", "Lesson 8", "Lesson 9", "Lesson 10", "Lesson 11", "Lesson 12", "Review 7-12"},
+		{"Matthew", "Mark", "Luke", "John", "Acts", "Romans", "1 Corinthians", "2 Corinthians", "Galatians", "Ephesians", "Philippians", 
+				"Colossians", "1 Thessalonians", "2 Thessalonians", "1 Timothy", "2 Timothy", "Titus", "Philemon", "Hebrews", "James", 
+				"1 Peter", "2 Peter", "1 John", "2 John", "3 John", "Jude", "Revelation"},
 		//11
-		{"Lesson 1", "Lesson 2", "Lesson 3", "Lesson 4", "Lesson 5", "Lesson 6", "Review 1-6",
-			"Lesson 7", "Lesson 8", "Lesson 9", "Lesson 10", "Lesson 11", "Lesson 12", "Review 7-12"},
+		{},
 		//12
 		{"Lesson 1", "Lesson 2", "Lesson 3", "Lesson 4", "Lesson 5", "Lesson 6", "Review 1-6",
 			"Lesson 7", "Lesson 8", "Lesson 9", "Lesson 10", "Lesson 11", "Lesson 12", "Review 7-12"},
@@ -72,6 +76,12 @@ public final class Book implements ItemListener {
 		{"Lesson 1", "Lesson 2", "Lesson 3", "Lesson 4", "Lesson 5", "Lesson 6", "Review 1-6",
 			"Lesson 7", "Lesson 8", "Lesson 9", "Lesson 10", "Lesson 11", "Lesson 12", "Review 7-12"},
 		//18
+		{"Lesson 1", "Lesson 2", "Lesson 3", "Lesson 4", "Lesson 5", "Lesson 6", "Review 1-6",
+			"Lesson 7", "Lesson 8", "Lesson 9", "Lesson 10", "Lesson 11", "Lesson 12", "Review 7-12"},
+		//19
+		{"Lesson 1", "Lesson 2", "Lesson 3", "Lesson 4", "Lesson 5", "Lesson 6", "Review 1-6",
+			"Lesson 7", "Lesson 8", "Lesson 9", "Lesson 10", "Lesson 11", "Lesson 12", "Review 7-12"},
+		//20
 		{"Genesis", "Exodus", "Leviticus", "Numbers", "Deuteronomy", "Joshua", "Judges", "Ruth",
 			"1 Samuel", "2 Samuel", "1 Kings", "2 Kings", "1 Chronicles", "2 Chronicles", "Ezra",
 			"Nehemiah", "Esther", "Job", "Psalm", "Proverbs", "Ecclesiastes", "Song of Solomon",

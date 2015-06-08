@@ -17,7 +17,7 @@ import org.h2.jdbcx.JdbcDataSource;
 public class DatabaseWrapper {
 
 	public static final String databaseLocked = "Awana Database can not start because the database is locked.\nEither the program is already running, or it did not shutdown properly last time it was run.";
-	public static final String altar = "ALTAR";
+	public static final String alter = "ALTER ";
 	public static final String create = "CREATE ";
 	public static final String delete = "DELETE ";
 	public static final String from = "FROM ";
@@ -127,8 +127,8 @@ public class DatabaseWrapper {
 			resultSet.beforeFirst();
 			while (resultSet.next()) {
 				r = new Listing(resultSet.getInt("ID"),
-						resultSet.getNString(fieldPrefix + Record.getMasterField(0).getName()),
-						resultSet.getNString(fieldPrefix + Record.getMasterField(1).getName()));
+						resultSet.getString(fieldPrefix + Record.getMasterField(0).getName()),
+						resultSet.getString(fieldPrefix + Record.getMasterField(1).getName()));
 				listModel.addElement(r);
 			}
 		} catch (Exception ex) {
@@ -165,6 +165,7 @@ public class DatabaseWrapper {
 	}
 
 	public int runStatement(String sqlstmt) {
+            System.out.println(sqlstmt);
 		int ID = 0;
 
 		Logger.getLogger("global").log(Level.INFO, null, sqlstmt);
@@ -259,47 +260,9 @@ public class DatabaseWrapper {
 		if (!tableExists(dataTable)) {
 			createTable();
 		}
+			updateTable();
 	}
-
-	//TODO: fix this method and add to updateDatabase() so database can be changed based on a easily editable yml file.
-	private void updateTable() {
-		Field f;
-		String name, storageType, defaultValue, sectionName;
-		ResultSet result = getColumnProperties(dataTable);
-		for (int i = 0; i < Record.getMasterFieldListSize(); i++) {
-			f = Record.getMasterField(i);
-			name = f.getName();
-			storageType = f.getStorageType();
-			defaultValue = f.getData();
-			if (!(resultSetContainsNameDataTypeAndDefaultValue(fieldPrefix + name, storageType, defaultValue, result) >= 0)) {
-				addColumn(name, storageType, defaultValue);
-			}
-		}
-		for (int i = 0; i < Book.bookNames.length; i++) {
-			name = Book.bookNames[i];
-			if (!(resultSetContainsNameAndDataType(bookPrefix + name + completedPostfix, bool, result) >= 0)) {
-				addColumn(bookPrefix + name + completedPostfix, bool, "FALSE");
-			}
-			if (!(resultSetContainsNameAndDataType(bookPrefix + name + datePostfix, varchar100, result) >= 0)) {
-				addColumn(bookPrefix + name + datePostfix, varchar100, "FALSE");
-			}
-			for (int j = 0; j < Book.bookSections[i].length; j++) {
-				sectionName = Book.bookSections[i][j];
-				if (!(resultSetContainsNameAndDataType(bookPrefix + name + "_" + sectionName + completedPostfix, bool, result) >= 0)) {
-					addColumn(bookPrefix + name + "_" + sectionName + completedPostfix, bool, "FALSE");
-				}
-				if (!(resultSetContainsNameAndDataType(bookPrefix + name + "_" + sectionName + datePostfix, varchar100, result) >= 0)) {
-					addColumn(bookPrefix + name + "_" + sectionName + datePostfix, varchar100, "FALSE");
-				}
-			}
-		}
-	}
-
-	private void addColumn(String columnName, String columnType, String defaultValue) {
-		String query = altar + table + "\"" + dataTable + "\" ADD " + columnName + " " + columnType + " DEFAULT \"" + defaultValue + "\";";
-		runStatement(query);
-	}
-
+	
 	private void createTable() {
 		Field f;
 		StringBuilder builder = new StringBuilder(create + table + dataTable + " ( ");
@@ -338,6 +301,47 @@ public class DatabaseWrapper {
 		runStatement(builder.toString());
 
 	}
+	private void updateTable() {
+		Field f;
+		String name, storageType, defaultValue;
+		StringBuilder builder = new StringBuilder();
+		for (int i = 0; i < Record.getMasterFieldListSize(); i++) {
+			f = Record.getMasterField(i);
+			name = f.getName();
+			storageType = f.getStorageType();
+			defaultValue = f.getData();
+			if (!(dbContainsColumn(fieldPrefix + name) >= 0)) {
+				builder.append(addColumn(fieldPrefix + name, storageType, defaultValue));
+			}
+		}
+		
+		for (int i = 0; i < Book.bookNames.length; i++) {
+			name = Book.bookNames[i];
+			if (!(dbContainsColumn(bookPrefix + name + completedPostfix) >= 0)) {
+				builder.append(addColumn(bookPrefix + name + completedPostfix, bool, "FALSE"));
+			}
+			if (!(dbContainsColumn(bookPrefix + name + datePostfix) >= 0)) {
+				builder.append(addColumn(bookPrefix + name + datePostfix, varchar100, null));
+			}
+			
+			for (String sectionName : Book.bookSections[i]) {
+				if (!(dbContainsColumn(bookPrefix + name + "_" + sectionName + completedPostfix) >= 0)) {
+					builder.append(addColumn(bookPrefix + name + "_" + sectionName + completedPostfix, bool, "FALSE"));
+				}
+				if (!(dbContainsColumn(bookPrefix + name + "_" + sectionName + datePostfix) >= 0)) {
+					builder.append(addColumn(bookPrefix + name + "_" + sectionName + datePostfix, varchar100, null));
+				}
+			}
+		}
+			runStatement(builder.toString());
+	}
+
+	private String addColumn(String columnName, String columnType, String defaultValue) {
+		if(defaultValue != null) {
+			return alter + table + "`" + dataTable + "` ADD `" + columnName + "` " + columnType + " DEFAULT '" + defaultValue + "';\n";
+		}
+		return alter + table + "`" + dataTable + "` ADD `" + columnName + "` " + columnType + " DEFAULT " + defaultValue + ";\n";
+	}
 
 	public boolean tableExists(String table) {
 		ResultSet s;
@@ -350,10 +354,19 @@ public class DatabaseWrapper {
 		return false;
 	}
 
+	public ResultSet getColumnProperties(String table, String column_name) {
+		try {
+			ResultSet r = h2DatabaseConnection.getMetaData().getColumns(null, null, table, column_name.toUpperCase());
+			return r;
+		} catch (Exception ex) {
+			Logger.getLogger("global").log(Level.SEVERE, null, ex);
+			return null;
+		}
+	}
+
 	public ResultSet getColumnProperties(String table) {
 		try {
-			printResultSet(h2DatabaseConnection.getMetaData().getColumns(null, null, dataTable, null));
-			ResultSet r = h2DatabaseConnection.getMetaData().getColumns(null, null, dataTable, null);
+			ResultSet r = h2DatabaseConnection.getMetaData().getColumns(null, null, table, null);
 			return r;
 		} catch (Exception ex) {
 			Logger.getLogger("global").log(Level.SEVERE, null, ex);
@@ -376,6 +389,11 @@ public class DatabaseWrapper {
 			return null;
 		}
 	}
+	
+	public int dbContainsNameDataTypeAndDefaultValue(String fieldName, String fieldDataType, String defaultValue) {
+		ResultSet results = getColumnProperties(dataTable, fieldName);
+		return resultSetContainsNameDataTypeAndDefaultValue(fieldName, fieldDataType, defaultValue, results);
+	}
 
 	public int resultSetContainsNameDataTypeAndDefaultValue(String fieldName, String fieldDataType, String defaultValue, ResultSet results) {
 		boolean contains = false;
@@ -383,7 +401,7 @@ public class DatabaseWrapper {
 		if (containsInRow >= 0) {
 			try {
 				results.absolute(containsInRow);
-				contains = defaultValue.equals(results.getString("COLUMN_DEFAULT"));
+				contains = defaultValue.equalsIgnoreCase(results.getString("COLUMN_DEFAULT"));
 				if (contains) {
 					return containsInRow;
 				}
@@ -392,6 +410,11 @@ public class DatabaseWrapper {
 			}
 		}
 		return -1;
+	}
+	
+	public int dbContainsNameAndDataType(String fieldName, String fieldDataType) {
+		ResultSet results = getColumnProperties(dataTable, fieldName);
+		return resultSetContainsNameAndDataType(fieldName, fieldDataType, results);
 	}
 
 	public int resultSetContainsNameAndDataType(String fieldName, String fieldDataType, ResultSet results) {
@@ -400,7 +423,7 @@ public class DatabaseWrapper {
 		if (containsInRow >= 0) {
 			try {
 				results.absolute(containsInRow);
-				contains = fieldDataType.equals(results.getString("TYPE_NAME"));
+				contains = fieldDataType.equalsIgnoreCase(results.getString("TYPE_NAME"));
 				if (contains) {
 					return containsInRow;
 				}
@@ -410,6 +433,11 @@ public class DatabaseWrapper {
 		}
 		return -1;
 	}
+	
+	public int dbContainsColumn(String fieldName) {
+		ResultSet results = getColumnProperties(dataTable, fieldName);
+		return resultSetContainsName(fieldName, results);
+	}
 
 	public int resultSetContainsName(String fieldName, ResultSet results) {
 		int contains = -1;
@@ -417,7 +445,7 @@ public class DatabaseWrapper {
 			int i = 0;
 			results.beforeFirst();
 			while (results.next()) {
-				if (fieldName.equals(results.getString("COLUMN_NAME"))) {
+				if (fieldName.equalsIgnoreCase(results.getString("COLUMN_NAME"))) {
 					return results.getRow();
 				}
 			}
